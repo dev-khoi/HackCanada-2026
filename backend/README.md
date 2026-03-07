@@ -2,6 +2,8 @@
 
 ## Recent Updates (March 7, 2026)
 
+- CORS now supports `https://threadify.pages.dev`, Cloudflare preview domains (`*.pages.dev`), and comma-separated `CORS_ORIGINS` from environment variables.
+- CORS supports wildcard `*` in `CORS_ORIGINS` and `CORS_ALLOW_ALL=true` for temporary fail-open debugging.
 - CORS now includes `https://threadify.pages.dev` in the backend allowed origins list.
 - UserItemSell now stores sellerName in addition to sellerId so listing cards can show creator names.
 - POST /api/listings now accepts optional sellerName and persists it.
@@ -134,6 +136,12 @@ CLOUDINARY_API_SECRET=your_api_secret
 # Optional — Google Gemini AI
 GEMINI_API_URL=https://generativelanguage.googleapis.com/...
 GEMINI_API_KEY=your_gemini_key
+
+# Optional - extra allowed CORS origins (comma-separated)
+CORS_ORIGINS=https://threadify.pages.dev,https://your-custom-domain.com
+
+# Optional - temporary debugging switch (allows all origins)
+CORS_ALLOW_ALL=false
 ```
 
 > **Note:** If your MongoDB password contains special characters, URL-encode them. Example: `p@ss!word` → `p%40ss%21word`

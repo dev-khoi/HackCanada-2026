@@ -11,19 +11,41 @@ const app = express();
 
 const allowedOrigins = [
   "https://threadify.pages.dev",
+  "https://hackcanada-2026-production.up.railway.app",
   "http://localhost:5173",
   "http://127.0.0.1:5173",
 ];
 
+const envOrigins = (process.env.CORS_ORIGINS || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const allowedOriginSet = new Set([...allowedOrigins, ...envOrigins]);
+const allowAllOrigins =
+  process.env.CORS_ALLOW_ALL === "true" || allowedOriginSet.has("*");
+
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (!origin) {
         callback(null, true);
         return;
       }
 
-      callback(new Error("Origin not allowed by CORS"));
+      if (allowAllOrigins) {
+        callback(null, true);
+        return;
+      }
+
+      const isPagesPreview = /^https:\/\/[a-z0-9-]+\.pages\.dev$/i.test(origin);
+      if (allowedOriginSet.has(origin) || isPagesPreview) {
+        callback(null, true);
+        return;
+      }
+
+      // Do not throw here; throwing can surface as gateway errors on some hosts.
+      callback(null, false);
     },
   }),
 );
