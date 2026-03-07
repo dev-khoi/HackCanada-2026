@@ -94,11 +94,55 @@ export async function recommendFromPrompt(
   });
 }
 
+export interface OutfitItem {
+  listingId: string;
+  listing: Listing;
+  slot: string;
+  reason: string;
+}
+
+export async function generateOutfit(
+  prompt: string
+): Promise<{ items: OutfitItem[]; stylistNote: string }> {
+  return apiFetch<{ items: OutfitItem[]; stylistNote: string }>(
+    "/api/outfit/generate",
+    {
+      method: "POST",
+      body: JSON.stringify({ prompt }),
+    }
+  );
+}
+
 export async function getUserStyle(
   auth0Id: string
 ): Promise<{ prompt: string; descriptions: string[] }> {
   return apiFetch<{ prompt: string; descriptions: string[] }>(
     `/api/users/${encodeURIComponent(auth0Id)}/style`
+  );
+}
+
+export interface PublicUserProfile {
+  auth0Id: string;
+  name: string;
+  picture: string;
+  location: string;
+}
+
+export async function fetchPublicUserProfile(
+  auth0Id: string
+): Promise<PublicUserProfile> {
+  return apiFetch<PublicUserProfile>(
+    `/api/users/${encodeURIComponent(auth0Id)}/public`
+  );
+}
+
+export async function savePublicUserProfile(
+  auth0Id: string,
+  data: { name?: string; picture?: string; location?: string; email?: string }
+): Promise<PublicUserProfile> {
+  return apiFetch<PublicUserProfile>(
+    `/api/users/${encodeURIComponent(auth0Id)}/public`,
+    { method: "PUT", body: JSON.stringify(data) }
   );
 }
 

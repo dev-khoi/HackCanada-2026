@@ -3,7 +3,6 @@ import { useAuth0 } from "@auth0/auth0-react";
 import ListingsPanel from "../components/ListingsPanel";
 import TransactionsPanel from "../components/TransactionsPanel";
 import ThriftOutPanel from "../components/ThriftOutPanel";
-import PersonalizePanel from "../components/PersonalizePanel";
 import "./shopPage.css";
 
 type ShopView = "listings" | "transactions" | "thriftOut" | "personalize";
@@ -27,7 +26,6 @@ export default function ShopPage() {
             onClick={() => setActiveView("thriftOut")}>
             Thrift Out
           </button>
-
           <button
             type="button"
             className={`shop-nav-btn${activeView === "listings" ? " active" : ""}`}

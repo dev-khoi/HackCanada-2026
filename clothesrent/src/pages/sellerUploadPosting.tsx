@@ -162,6 +162,13 @@ export default function SellerUploadPosting() {
         : [];
 
       const result = await createListing({
+        // Creator display name must come from the user's profile name, not email/nickname.
+        sellerName: loadUserProfile(user?.sub ?? "", {
+          name: "",
+          style: "",
+          picture: "",
+          location: "",
+        }).name.trim(),
         title: draft.title.trim(),
         description: draft.description.trim(),
         price: parseFloat(draft.price),

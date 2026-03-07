@@ -5,6 +5,7 @@ import styleRoutes from "./routes/styleRoutes";
 import purchaseRoutes from "./routes/purchaseRoutes";
 import uploadRoutes from "./routes/uploadRoutes";
 import userRoutes from "./routes/userRoutes";
+import outfitRoutes from "./routes/outfitRoutes";
 
 const app = express();
 
@@ -16,6 +17,7 @@ app.use("/api/style", styleRoutes);
 app.use("/api/purchases", purchaseRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/outfit", outfitRoutes);
 
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok" });

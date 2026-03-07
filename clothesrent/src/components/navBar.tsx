@@ -3,7 +3,7 @@ import { useAuth0 } from "@auth0/auth0-react";
 import StyleSearchModal from "./StyleSearchModal";
 import type { Listing } from "../types/listing";
 
-const NAV_LINKS = ["Home", "Shop"];
+const NAV_LINKS = ["Home", "Wardrobe", "Shop"];
 
 export default function Navbar({
   onRecommendations,
@@ -36,7 +36,15 @@ export default function Navbar({
           {NAV_LINKS.map((link) => (
             <a
               key={link}
-              href={link === "Home" ? "/" : link === "Shop" ? "/shop" : "#"}
+              href={
+                link === "Home"
+                  ? "/"
+                  : link === "Shop"
+                  ? "/shop"
+                  : link === "Wardrobe"
+                  ? "/outfit"
+                  : "#"
+              }
               className="nav-link">
               {link}
             </a>

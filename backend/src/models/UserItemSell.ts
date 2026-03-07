@@ -15,6 +15,7 @@ const TransformationsSchema = new Schema(
 const UserItemSellSchema = new Schema<IUserItemSell>(
   {
     sellerId: { type: String, default: "" },
+    sellerName: { type: String, default: "" },
     title: { type: String, required: true },
     description: { type: String, required: true },
     price: { type: Number, required: true },

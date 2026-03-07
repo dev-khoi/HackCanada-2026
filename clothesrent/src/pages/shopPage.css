@@ -138,6 +138,16 @@
   margin-top: 0.2rem;
 }
 
+.shop-card-user-link {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.shop-card-user-link:hover {
+  color: #166052;
+}
+
 .shop-pill {
   display: inline-block;
   padding: 0.22rem 0.52rem;

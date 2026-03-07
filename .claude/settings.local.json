@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(lsof -ti :5000)",
+      "Bash(xargs kill -9)",
+      "Bash(lsof -i :5000)",
+      "Bash(npm install @google/generative-ai)",
+      "Bash(curl -s \"https://generativelanguage.googleapis.com/v1beta/models?key=AIzaSyDqG_7E_LwJN8WrdDz6Q9uchbLT3jdOaIY\")"
+    ]
+  }
+}

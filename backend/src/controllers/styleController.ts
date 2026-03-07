@@ -2,6 +2,40 @@ import { Request, Response } from "express";
 import { analyzeStyle } from "../services/geminiService";
 import { searchByStyle, recommendListings } from "../services/backboardService";
 import UserItemSell from "../models/UserItemSell";
+import User from "../models/User";
+
+async function attachProfileNames<T extends { sellerId?: string; sellerName?: string }>(
+  listings: T[]
+): Promise<Array<T & { sellerName: string }>> {
+  const sellerIds = Array.from(
+    new Set(
+      listings
+        .map((listing) => listing.sellerId?.trim() || "")
+        .filter((id) => id.length > 0)
+    )
+  );
+
+  if (!sellerIds.length) {
+    return listings.map((listing) => ({
+      ...listing,
+      sellerName: listing.sellerName?.trim() || listing.sellerId?.trim() || "",
+    }));
+  }
+
+  const users = await User.find({ auth0Id: { $in: sellerIds } })
+    .select({ auth0Id: 1, username: 1 })
+    .lean();
+  const namesById = new Map(users.map((user) => [user.auth0Id, user.username?.trim() || ""]));
+
+  return listings.map((listing) => ({
+    ...listing,
+    sellerName:
+      namesById.get(listing.sellerId?.trim() || "") ||
+      listing.sellerName?.trim() ||
+      listing.sellerId?.trim() ||
+      "",
+  }));
+}
 
 export const analyzeStyleFromImages = async (req: Request, res: Response) => {
   try {
@@ -99,13 +133,15 @@ export const searchListingsByStyle = async (req: Request, res: Response) => {
           { description: { $regex: query, $options: "i" } },
           { tags: { $regex: query, $options: "i" } },
         ],
-      }).limit(20);
-      res.json(listings);
+      }).limit(20).lean();
+      const listingsWithNames = await attachProfileNames(listings);
+      res.json(listingsWithNames);
       return;
     }
 
-    const listings = await UserItemSell.find({ _id: { $in: listingIds } });
-    res.json(listings);
+    const listings = await UserItemSell.find({ _id: { $in: listingIds } }).lean();
+    const listingsWithNames = await attachProfileNames(listings);
+    res.json(listingsWithNames);
   } catch (error) {
     res.status(500).json({ error: "Style search failed" });
   }

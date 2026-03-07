@@ -1,6 +1,64 @@
 import { Request, Response } from "express";
 import User from "../models/User";
 
+export const getPublicUserProfile = async (req: Request, res: Response) => {
+  try {
+    const { auth0Id } = req.params;
+    const user = await User.findOne({ auth0Id }).lean();
+
+    if (!user) {
+      res.status(404).json({ error: "User profile not found" });
+      return;
+    }
+
+    res.json({
+      auth0Id,
+      name: user.username ?? "",
+      picture: user.picture ?? "",
+      location: user.location ?? "",
+    });
+  } catch (error: any) {
+    console.error("getPublicUserProfile error:", error?.message || error);
+    res.status(500).json({ error: "Failed to load user profile" });
+  }
+};
+
+export const savePublicUserProfile = async (req: Request, res: Response) => {
+  try {
+    const { auth0Id } = req.params;
+    const { name, picture, location, email } = req.body as {
+      name?: string;
+      picture?: string;
+      location?: string;
+      email?: string;
+    };
+
+    const user = await User.findOneAndUpdate(
+      { auth0Id },
+      {
+        $set: {
+          auth0Id,
+          ...(name !== undefined ? { username: name } : {}),
+          ...(picture !== undefined ? { picture } : {}),
+          ...(location !== undefined ? { location } : {}),
+          ...(email !== undefined ? { email } : {}),
+        },
+      },
+      { upsert: true, new: true }
+    ).lean();
+
+    res.json({
+      auth0Id,
+      name: user.username ?? "",
+      picture: user.picture ?? "",
+      location: user.location ?? "",
+    });
+  } catch (error: any) {
+    console.error("savePublicUserProfile error:", error?.message || error);
+    res.status(500).json({ error: "Failed to save user profile" });
+  }
+};
+
 /**
  * GET /api/users/:auth0Id/style
  * Returns the user's styleProfileJSON (prompt + descriptions).

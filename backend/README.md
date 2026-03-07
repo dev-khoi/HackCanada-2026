@@ -1,5 +1,14 @@
 # ClothesRent Backend
 
+## Recent Updates (March 7, 2026)
+
+- UserItemSell now stores sellerName in addition to sellerId so listing cards can show creator names.
+- POST /api/listings now accepts optional sellerName and persists it.
+- Added public profile endpoints: GET /api/users/:auth0Id/public and PUT /api/users/:auth0Id/public.
+- users documents now include optional picture and location fields.
+- Listing and style-search responses now resolve `sellerName` from the user profile (`users.username`) so Thrift Out always shows the profile name.
+- Listing creation now rejects requests without a profile name (`users.username`) for authenticated sellers.
+
 Express + TypeScript REST API powering the ClothesRent platform — a peer-to-peer clothing rental & resale marketplace.
 
 ---
@@ -630,4 +639,5 @@ The frontend (`clothesrent/`) at `http://localhost:5173` connects to this backen
 **Style search**:
 
 - `POST /api/style/search` with `{ query: "..." }`
+
 

@@ -1,16 +1,51 @@
 import { Request, Response } from "express";
 import UserItemSell from "../models/UserItemSell";
 import UserItemBuy from "../models/UserItemBuy";
+import User from "../models/User";
 import { uploadImage } from "../services/cloudinaryService";
 import { generateBBLink } from "../services/backboardService";
 import { CreateListingBody, PurchaseBody } from "../types";
+
+async function attachProfileNames<T extends { sellerId?: string; sellerName?: string }>(
+  listings: T[]
+): Promise<Array<T & { sellerName: string }>> {
+  const sellerIds = Array.from(
+    new Set(
+      listings
+        .map((listing) => listing.sellerId?.trim() || "")
+        .filter((id) => id.length > 0)
+    )
+  );
+
+  if (!sellerIds.length) {
+    return listings.map((listing) => ({
+      ...listing,
+      sellerName: listing.sellerName?.trim() || listing.sellerId?.trim() || "",
+    }));
+  }
+
+  const users = await User.find({ auth0Id: { $in: sellerIds } })
+    .select({ auth0Id: 1, username: 1 })
+    .lean();
+  const namesById = new Map(users.map((user) => [user.auth0Id, user.username?.trim() || ""]));
+
+  return listings.map((listing) => ({
+    ...listing,
+    sellerName:
+      namesById.get(listing.sellerId?.trim() || "") ||
+      listing.sellerName?.trim() ||
+      listing.sellerId?.trim() ||
+      "",
+  }));
+}
 
 export const getAllListings = async (req: Request, res: Response) => {
   try {
     const statusFilter = req.query.status as string | undefined;
     const filter = statusFilter ? { status: statusFilter } : {};
-    const listings = await UserItemSell.find(filter).sort({ createdAt: -1 });
-    res.json(listings);
+    const listings = await UserItemSell.find(filter).sort({ createdAt: -1 }).lean();
+    const listingsWithNames = await attachProfileNames(listings);
+    res.json(listingsWithNames);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch listings" });
   }
@@ -18,12 +53,13 @@ export const getAllListings = async (req: Request, res: Response) => {
 
 export const getListingById = async (req: Request, res: Response) => {
   try {
-    const listing = await UserItemSell.findById(req.params.id);
+    const listing = await UserItemSell.findById(req.params.id).lean();
     if (!listing) {
       res.status(404).json({ error: "Listing not found" });
       return;
     }
-    res.json(listing);
+    const [listingWithName] = await attachProfileNames([listing]);
+    res.json(listingWithName);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch listing" });
   }
@@ -39,6 +75,7 @@ export const createListing = async (req: Request, res: Response) => {
       location,
       tags,
       sellerId,
+      sellerName,
       cloudinaryUrl: preUploadedUrl,
       publicId: preUploadedPublicId,
       autoTags,
@@ -85,8 +122,20 @@ export const createListing = async (req: Request, res: Response) => {
       ...new Set([...(tags ?? []), ...cloudinaryTags]),
     ];
 
+    const existingUser = sellerId
+      ? await User.findOne({ auth0Id: sellerId }).select({ username: 1 }).lean()
+      : null;
+    const resolvedSellerName =
+      existingUser?.username?.trim() || sellerName?.trim() || "";
+
+    if (sellerId && !resolvedSellerName) {
+      res.status(400).json({ error: "Please set your profile name before creating a listing" });
+      return;
+    }
+
     const listing = new UserItemSell({
       sellerId: sellerId ?? "",
+      sellerName: resolvedSellerName,
       title,
       description,
       price,
@@ -108,11 +157,25 @@ export const createListing = async (req: Request, res: Response) => {
 
     await listing.save();
 
+    if (sellerId) {
+      await User.findOneAndUpdate(
+        { auth0Id: sellerId },
+        {
+          $set: {
+            auth0Id: sellerId,
+            ...(resolvedSellerName ? { username: resolvedSellerName } : {}),
+          },
+        },
+        { upsert: true }
+      );
+    }
+
     res.status(201).json({
       success: true,
       item: {
         itemId: listing._id,
         sellerId: listing.sellerId,
+        sellerName: listing.sellerName,
         title: listing.title,
         description: listing.description,
         location: listing.location,
