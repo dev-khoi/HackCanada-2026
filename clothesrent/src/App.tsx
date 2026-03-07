@@ -16,6 +16,7 @@ import {
   type UserProfileData,
 } from "./utils/profileStorage";
 import { geocodeAddressToCoords } from "./utils/location";
+import { onNavigate } from "./utils/navigate";
 import { fetchListings, fetchPublicUserProfile } from "./api/listings";
 import type { Listing } from "./types/listing";
 import { buildDisplayUrl } from "./utils/cloudinaryUrl";
@@ -540,7 +541,12 @@ export default function App({
   onClearRecommendations?: () => void;
 }) {
   const { isAuthenticated, isLoading, user } = useAuth0();
-  const path = window.location.pathname;
+  const [path, setPath] = useState(window.location.pathname);
+
+  useEffect(() => {
+    return onNavigate(() => setPath(window.location.pathname));
+  }, []);
+
   const profileMatch = path.match(/^\/profile\/(.+)$/);
   const profileUserId = profileMatch ? decodeURIComponent(profileMatch[1]) : null;
   const [isCheckingRequiredProfile, setIsCheckingRequiredProfile] = useState(true);
@@ -584,19 +590,9 @@ export default function App({
     (route) => path === route,
   );
 
-  // Show loading while Auth0 is initializing
-  if (isLoading) {
-    return (
-      <main className="auth-page">
-        <section className="auth-card">
-          <h1 className="font-display auth-title">Loading...</h1>
-        </section>
-      </main>
-    );
-  }
 
-  // Redirect unauthenticated users away from protected routes
-  if (!isAuthenticated && isAccessingProtectedRoute) {
+  // Redirect unauthenticated users away from protected routes (only after Auth0 has finished loading)
+  if (!isLoading && !isAuthenticated && isAccessingProtectedRoute) {
     return <SignInPage />;
   }
 
