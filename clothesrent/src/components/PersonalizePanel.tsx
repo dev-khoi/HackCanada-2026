@@ -15,12 +15,6 @@ interface Props {
   fallbackPicture: string;
 }
 
-interface PreviewItem {
-  key: string;
-  name: string;
-  url: string;
-}
-
 function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();

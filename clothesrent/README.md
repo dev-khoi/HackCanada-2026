@@ -147,10 +147,10 @@ Four-tab sidebar layout. Displays the signed-in user's nickname/email. All tabs 
 
 ### 3. Create Listing — Multi-Step Flow (`/shop/new-listing`)
 #### Tab: Personalize (`PersonalizePanel`)
-- Upload up to 10 inspiration images
+- Search by saved style prompt or upload up to 10 inspiration images
 - Styled "Browse Photos" action aligned with site button styling
 - Thumbnail grid preview of selected uploads before analysis
-- Placeholder AI analyze action (Gemini integration pending), currently based on filename heuristics with fallback style suggestions
+- Uses Gemini image analysis + Backboard recommendations for personalized matches
 - Shows returned style and allows manual edits
 - Saves the chosen style to profile storage so `/profile` shows the updated style
 
@@ -245,7 +245,7 @@ All backend communication is centralized in two files:
 | `ListingsPanel` | `ListingsPanel.tsx` | `userId: string` | Seller's listing management — applies stored transformations to display images |
 | `TransactionsPanel` | `TransactionsPanel.tsx` | `userId: string` | Purchase history — shows buyer/seller role pill, Cloudinary thumbnails |
 | `ThriftOutPanel` | `ThriftOutPanel.tsx` | `userId: string` | Browse live listings — applies stored transformations + conditional badges, Auth0-powered purchase |
-| `PersonalizePanel` | `PersonalizePanel.tsx` | `userId, fallbackName, fallbackPicture` | Upload up to 10 photos with thumbnail previews, run placeholder AI style analysis, and save style into profile storage |
+| `PersonalizePanel` | `PersonalizePanel.tsx` | `userId, fallbackName, fallbackPicture` | Save a style prompt or analyze up to 10 photos, then show personalized recommendations from Backboard |
 
 ---
 
@@ -472,6 +472,7 @@ All images served through Cloudinary's CDN with transformations applied via URL 
 Display components (`ListingsPanel`, `ThriftOutPanel`) read the `listing.transformations` field from the database and pass it to `buildDisplayUrl()` so the seller's chosen enhancements are applied consistently everywhere the image is shown.
 
 Grid cards are capped at `max-width: 320px` with `auto-fill` layout (no stretching on wide screens). All images use `loading="lazy"` for deferred loading below the fold.
+
 
 
 
