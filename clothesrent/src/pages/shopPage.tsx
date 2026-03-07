@@ -44,13 +44,13 @@ export default function ShopPage() {
             onClick={() => setActiveView("transactions")}>
             Transaction Log
           </button>
-
+          {/* 
           <button
             type="button"
             className={`shop-nav-btn${activeView === "personalize" ? " active" : ""}`}
             onClick={() => setActiveView("personalize")}>
             Personalize
-          </button>
+          </button> */}
         </aside>
 
         <section className="shop-content">
@@ -68,13 +68,13 @@ export default function ShopPage() {
             <TransactionsPanel userId={userId} />
           )}
           {activeView === "thriftOut" && <ThriftOutPanel userId={userId} />}
-          {activeView === "personalize" && (
+          {/* {activeView === "personalize" && (
             <PersonalizePanel
               userId={userId}
               fallbackName={user?.name ?? user?.nickname ?? ""}
               fallbackPicture={user?.picture ?? ""}
             />
-          )}
+          )} */}
         </section>
       </div>
     </main>
