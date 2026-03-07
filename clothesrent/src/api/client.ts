@@ -1,9 +1,9 @@
 export const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:5000";
+  import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 export async function apiFetch<T>(
   path: string,
-  options?: RequestInit
+  options?: RequestInit,
 ): Promise<T> {
   const res = await fetch(`${API_BASE_URL}${path}`, {
     headers: { "Content-Type": "application/json" },
@@ -20,7 +20,7 @@ export async function apiFetch<T>(
 
 export async function apiFormFetch<T>(
   path: string,
-  formData: FormData
+  formData: FormData,
 ): Promise<T> {
   const res = await fetch(`${API_BASE_URL}${path}`, {
     method: "POST",
