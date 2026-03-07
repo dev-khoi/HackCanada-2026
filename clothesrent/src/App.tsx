@@ -543,7 +543,7 @@ export default function App({
   const path = window.location.pathname;
   const profileMatch = path.match(/^\/profile\/(.+)$/);
   const profileUserId = profileMatch ? decodeURIComponent(profileMatch[1]) : null;
-  const [isCheckingRequiredProfile, setIsCheckingRequiredProfile] = useState(false);
+  const [isCheckingRequiredProfile, setIsCheckingRequiredProfile] = useState(true);
   const [mustSetProfileName, setMustSetProfileName] = useState(false);
 
   useEffect(() => {
@@ -556,7 +556,6 @@ export default function App({
         return;
       }
 
-      setIsCheckingRequiredProfile(true);
       try {
         const publicProfile = await fetchPublicUserProfile(user.sub);
         if (!cancelled) {
@@ -596,22 +595,13 @@ export default function App({
     );
   }
 
-  if (isAuthenticated && isCheckingRequiredProfile) {
-    return (
-      <main className="auth-page">
-        <section className="auth-card">
-          <h1 className="font-display auth-title">Loading...</h1>
-        </section>
-      </main>
-    );
-  }
-
   // Redirect unauthenticated users away from protected routes
   if (!isAuthenticated && isAccessingProtectedRoute) {
     return <SignInPage />;
   }
 
-  if (isAuthenticated && mustSetProfileName && !path.startsWith("/profile")) {
+  // Only redirect to profile AFTER check completes (no blocking loading screen)
+  if (isAuthenticated && !isCheckingRequiredProfile && mustSetProfileName && !path.startsWith("/profile")) {
     return <ProfilePage requireName />;
   }
 
