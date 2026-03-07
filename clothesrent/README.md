@@ -150,7 +150,7 @@ Four-tab sidebar layout. Displays the signed-in user's nickname/email. All tabs 
 - Upload up to 10 inspiration images
 - Styled "Browse Photos" action aligned with site button styling
 - Thumbnail grid preview of selected uploads before analysis
-- Placeholder AI analyze action (Gemini integration pending)
+- Placeholder AI analyze action (Gemini integration pending), currently based on filename heuristics with fallback style suggestions
 - Shows returned style and allows manual edits
 - Saves the chosen style to profile storage so `/profile` shows the updated style
 
@@ -472,6 +472,7 @@ All images served through Cloudinary's CDN with transformations applied via URL 
 Display components (`ListingsPanel`, `ThriftOutPanel`) read the `listing.transformations` field from the database and pass it to `buildDisplayUrl()` so the seller's chosen enhancements are applied consistently everywhere the image is shown.
 
 Grid cards are capped at `max-width: 320px` with `auto-fill` layout (no stretching on wide screens). All images use `loading="lazy"` for deferred loading below the fold.
+
 
 
 
