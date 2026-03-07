@@ -91,6 +91,46 @@ body {
   gap: 2.25rem;
 }
 
+.nav-search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.nav-search-input {
+  width: 240px;
+  height: 38px;
+  border: 1px solid rgb(37 31 51 / 26%);
+  background: rgb(255 255 255 / 72%);
+  color: var(--ink);
+  padding: 0 0.8rem;
+  font-family: "Jost", sans-serif;
+  font-size: 0.76rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.nav-search-input::placeholder {
+  color: rgb(37 31 51 / 55%);
+}
+
+.nav-search-input:focus {
+  outline: none;
+  border-color: rgb(37 31 51 / 48%);
+}
+
+.nav-search-btn {
+  padding: 0.55rem 1.1rem;
+  font-size: 0.66rem;
+  line-height: 1;
+}
+
+.nav-auth-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
 .nav-link {
   font-size: 0.72rem;
   letter-spacing: 0.16em;
@@ -836,7 +876,8 @@ footer {
 }
 
 @media (max-width: 1100px) {
-  .nav-links {
+  .nav-links,
+  .nav-search {
     display: none;
   }
 }

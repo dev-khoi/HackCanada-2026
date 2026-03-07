@@ -5,6 +5,7 @@ import "./App.css";
 import { UploadPhotoButton } from "./components/uploadPhotoButton";
 import ShopPage from "./pages/shopPage";
 import SellerUploadPosting from "./pages/sellerUploadPosting";
+import ProfilePage from "./pages/profilePage";
 
 type Product = {
   id: number;
@@ -343,8 +344,21 @@ function SignInPage() {
     user,
   } = useAuth0();
 
+  const profileRedirect = `${window.location.origin}/profile`;
+
+  useEffect(() => {
+    if (isAuthenticated && window.location.pathname === "/signin") {
+      window.location.replace("/profile");
+    }
+  }, [isAuthenticated]);
+
   const signup = () =>
-    login({ authorizationParams: { screen_hint: "signup" } });
+    login({
+      authorizationParams: {
+        screen_hint: "signup",
+        redirect_uri: profileRedirect,
+      },
+    });
 
   const logout = () =>
     auth0Logout({
@@ -365,18 +379,11 @@ function SignInPage() {
     return (
       <main className="auth-page">
         <section className="auth-card">
-          <a href="/" className="auth-home-link">
-            Back to Home
-          </a>
           <p className="auth-subtitle">
             Logged in as {user?.email ?? "your account"}
           </p>
-          <h1 className="font-display auth-title">User Profile</h1>
-          <pre className="auth-pre">{JSON.stringify(user, null, 2)}</pre>
-          <button
-            type="button"
-            className="btn-primary auth-btn"
-            onClick={logout}>
+          <h1 className="font-display auth-title">Redirecting to Profile...</h1>
+          <button type="button" className="btn-outline auth-btn" onClick={logout}>
             Logout
           </button>
         </section>
@@ -403,7 +410,9 @@ function SignInPage() {
           <button
             type="button"
             className="btn-outline auth-btn"
-            onClick={() => login()}>
+            onClick={() =>
+              login({ authorizationParams: { redirect_uri: profileRedirect } })
+            }>
             Login
           </button>
         </div>
@@ -431,7 +440,7 @@ export default function App() {
   const path = window.location.pathname;
 
   // Protect routes that require authentication
-  const protectedRoutes = ["/shop/new-listing", "/shop"];
+  const protectedRoutes = ["/shop/new-listing", "/shop", "/profile"];
   const isAccessingProtectedRoute = protectedRoutes.some(
     (route) => path === route,
   );
@@ -462,6 +471,10 @@ export default function App() {
 
   if (path === "/shop") {
     return <ShopPage />;
+  }
+
+  if (path === "/profile") {
+    return <ProfilePage />;
   }
 
   return <LandingPage />;

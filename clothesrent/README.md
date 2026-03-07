@@ -52,12 +52,14 @@ clothesrent/
 │   │   ├── ListingsPanel.tsx      # Seller's listings (CRUD, status toggle, stored transforms)
 │   │   ├── TransactionsPanel.tsx  # Purchase history table
 │   │   ├── ThriftOutPanel.tsx     # Browse & purchase live listings + stored transforms
-│   │   ├── navBar.tsx             # Top navigation bar
+│   │   ├── navBar.tsx             # Top navigation (Home, Shop, placeholder search, auth actions)
 │   │   └── uploadPhotoButton.tsx  # Direct-to-Cloudinary upload button
 │   │
 │   ├── pages/
 │   │   ├── shopPage.tsx           # Seller dashboard (3-tab layout)
 │   │   ├── shopPage.css           # Shop page styles
+|   |   |- profilePage.tsx         # User profile page (picture, name, style)
+|   |   |- profilePage.css         # Profile page styles
 │   │   ├── sellerUploadPosting.tsx # Multi-step listing creator (Upload → Enhance → Details)
 │   │   └── sellerUploadPosting.css
 │   │
@@ -92,7 +94,8 @@ clothesrent/
 | `/` | `LandingPage` | Hero product carousel + nearby rental map |
 | `/shop` | `ShopPage` | Seller dashboard with 3 tabs |
 | `/shop/new-listing` | `SellerUploadPosting` | Create a new listing form |
-| `/signin` | `SignInPage` | Auth0 login / signup / profile |
+| `/profile` | `ProfilePage` | User profile (picture, name, style) |
+| `/signin` | `SignInPage` | Auth0 login / signup entry page |
 
 ---
 
@@ -103,6 +106,7 @@ clothesrent/
 - **Product Carousel** — auto-scrolling marquee of featured rental items with hover-pause, manual arrow navigation, and "Reserve" overlay buttons
 - **Nearby Rental Map** — Leaflet map centered on Toronto showing rental pickup points with circle markers and popup ETAs
 - **Footer** — brand info, shop/help/brand link columns, social links
+- **Navbar** - fixed top nav with brand + Home + Shop, a placeholder search bar that writes ?q= in URL for future search integration, and auth-aware actions (Sign In becomes Profile + Sign Out when authenticated)
 
 ### 2. Seller Dashboard (`/shop`)
 
@@ -165,8 +169,15 @@ Three-step interactive listing creator with live AI transformation preview:
 ### 4. Sign In (`/signin`)
 
 - Auth0-powered login and signup
-- Displays user profile JSON when authenticated
+- Successful auth redirects to `/profile`
 - Logout button with redirect back to `/signin`
+
+### 5. Profile (`/profile`)
+
+- Protected page for authenticated users
+- Displays profile picture, name, and style
+- Profile picture can be changed via local image upload
+- Name/style and custom picture are saved in local storage per Auth0 user
 
 ---
 
@@ -202,7 +213,7 @@ All backend communication is centralized in two files:
 
 | Component | File | Props | Description |
 |-----------|------|-------|-------------|
-| `Navbar` | `navBar.tsx` | — | Top nav with brand, links, sign-in. Adds `scrolled` class on scroll |
+| `Navbar` | `navBar.tsx` | — | Top nav with brand, Home/Shop links, a placeholder search form, and auth-aware actions (Sign In or Profile + Sign Out). Adds `scrolled` class on scroll |
 | `CloudinaryImage` | `CloudinaryImage.tsx` | `publicId, alt, width, height, className` | Renders optimized Cloudinary image via `@cloudinary/react` |
 | `ImageTransformPanel` | `ImageTransformPanel.tsx` | `cloudinaryUrl, onChange` | Interactive AI transformation controls with live before/after preview |
 | `UploadPhotoButton` | `uploadPhotoButton.tsx` | `onUploadSuccess, onUploadError, buttonLabel, uploadPreset` | Direct-to-Cloudinary browser upload with XHR progress bar |
@@ -353,7 +364,7 @@ The app runs at `http://localhost:5173`.
 |---------|-------|
 | Domain | `dev-b65r14eontgkyt0y.us.auth0.com` |
 | Client ID | `0RjoItM0to13cLRHdYLdBCd61OyiavWk` |
-| Redirect URI | `{origin}/signin` |
+| Redirect URI | `{origin}/profile` |
 | Signup | Screen hint → `signup` |
 | Logout | Returns to `/signin` |
 
@@ -433,3 +444,7 @@ All images served through Cloudinary's CDN with transformations applied via URL 
 Display components (`ListingsPanel`, `ThriftOutPanel`) read the `listing.transformations` field from the database and pass it to `buildDisplayUrl()` so the seller's chosen enhancements are applied consistently everywhere the image is shown.
 
 Grid cards are capped at `max-width: 320px` with `auto-fill` layout (no stretching on wide screens). All images use `loading="lazy"` for deferred loading below the fold.
+
+
+
+
