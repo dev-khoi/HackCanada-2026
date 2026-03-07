@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ImageTransformations } from "../types/listing";
 import { DEFAULT_TRANSFORMATIONS } from "../types/listing";
 import { buildDisplayUrl } from "../utils/cloudinaryUrl";
@@ -8,10 +8,17 @@ interface Props {
   onChange: (transforms: ImageTransformations) => void;
 }
 
-export default function ImageTransformPanel({ cloudinaryUrl, onChange }: Props) {
+export default function ImageTransformPanel({
+  cloudinaryUrl,
+  onChange,
+}: Props) {
   const [transforms, setTransforms] = useState<ImageTransformations>({
     ...DEFAULT_TRANSFORMATIONS,
   });
+  const [isOriginalLoading, setIsOriginalLoading] = useState(true);
+  const [isEnhancedLoading, setIsEnhancedLoading] = useState(true);
+  const originalImageRef = useRef<HTMLImageElement>(null);
+  const enhancedImageRef = useRef<HTMLImageElement>(null);
 
   const update = (partial: Partial<ImageTransformations>) => {
     const next = { ...transforms, ...partial };
@@ -33,6 +40,14 @@ export default function ImageTransformPanel({ cloudinaryUrl, onChange }: Props) 
     height: 533,
   });
 
+  useEffect(() => {
+    setIsOriginalLoading(!(originalImageRef.current?.complete ?? false));
+  }, [originalUrl]);
+
+  useEffect(() => {
+    setIsEnhancedLoading(!(enhancedImageRef.current?.complete ?? false));
+  }, [previewUrl]);
+
   return (
     <div className="transform-panel">
       <h3 className="transform-panel-title">Enhance Your Photo</h3>
@@ -45,13 +60,45 @@ export default function ImageTransformPanel({ cloudinaryUrl, onChange }: Props) 
         <div className="transform-preview-col">
           <span className="transform-preview-label">Original</span>
           <div className="transform-preview-box">
-            <img src={originalUrl} alt="Original" className="transform-preview-img" />
+            <img
+              ref={originalImageRef}
+              src={originalUrl}
+              alt="Original"
+              className={`transform-preview-img${isOriginalLoading ? " transform-preview-img--loading" : ""}`}
+              onLoad={() => setIsOriginalLoading(false)}
+              onError={() => setIsOriginalLoading(false)}
+            />
+            {isOriginalLoading && (
+              <div
+                className="image-loading-overlay"
+                role="status"
+                aria-live="polite">
+                <span className="image-loading-spinner" aria-hidden="true" />
+                <span className="image-loading-text">Loading image...</span>
+              </div>
+            )}
           </div>
         </div>
         <div className="transform-preview-col">
           <span className="transform-preview-label">Enhanced</span>
           <div className="transform-preview-box transform-preview-box--active">
-            <img src={previewUrl} alt="Enhanced preview" className="transform-preview-img" />
+            <img
+              ref={enhancedImageRef}
+              src={previewUrl}
+              alt="Enhanced preview"
+              className={`transform-preview-img${isEnhancedLoading ? " transform-preview-img--loading" : ""}`}
+              onLoad={() => setIsEnhancedLoading(false)}
+              onError={() => setIsEnhancedLoading(false)}
+            />
+            {isEnhancedLoading && (
+              <div
+                className="image-loading-overlay"
+                role="status"
+                aria-live="polite">
+                <span className="image-loading-spinner" aria-hidden="true" />
+                <span className="image-loading-text">Applying changes...</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -71,9 +118,7 @@ export default function ImageTransformPanel({ cloudinaryUrl, onChange }: Props) 
             className="transform-checkbox"
             checked={transforms.removeBg}
             disabled={!!transforms.replaceBg}
-            onChange={(e) =>
-              update({ removeBg: e.target.checked })
-            }
+            onChange={(e) => update({ removeBg: e.target.checked })}
           />
         </label>
 
@@ -92,7 +137,9 @@ export default function ImageTransformPanel({ cloudinaryUrl, onChange }: Props) 
               checked={!!transforms.replaceBg}
               onChange={(e) =>
                 update({
-                  replaceBg: e.target.checked ? "clean white studio background" : null,
+                  replaceBg: e.target.checked
+                    ? "clean white studio background"
+                    : null,
                   removeBg: false,
                 })
               }
@@ -173,7 +220,8 @@ export default function ImageTransformPanel({ cloudinaryUrl, onChange }: Props) 
 
       {/* Optimization note */}
       <p className="transform-note">
-        ✓ Auto quality &amp; format optimization is always applied for fast delivery.
+        ✓ Auto quality &amp; format optimization is always applied for fast
+        delivery.
       </p>
     </div>
   );

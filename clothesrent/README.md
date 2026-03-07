@@ -24,15 +24,15 @@ clothesrent/ (Vite + React + TypeScript)
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Framework | React 19 |
-| Build Tool | Vite 7 |
-| Language | TypeScript 5.9 |
-| Auth | Auth0 (`@auth0/auth0-react`) |
-| Images | Cloudinary (`@cloudinary/react`, `@cloudinary/url-gen`) |
-| Maps | Leaflet + react-leaflet |
-| Backend API | Custom Express server (see `../backend/`) |
+| Layer       | Technology                                              |
+| ----------- | ------------------------------------------------------- |
+| Framework   | React 19                                                |
+| Build Tool  | Vite 7                                                  |
+| Language    | TypeScript 5.9                                          |
+| Auth        | Auth0 (`@auth0/auth0-react`)                            |
+| Images      | Cloudinary (`@cloudinary/react`, `@cloudinary/url-gen`) |
+| Maps        | Leaflet + react-leaflet                                 |
+| Backend API | Custom Express server (see `../backend/`)               |
 
 ---
 
@@ -91,7 +91,7 @@ clothesrent/
 ## Pages & Routes
 
 | Path | Component | Description |
-|------|-----------|-------------|
+| --- | --- | --- |
 | `/` | `LandingPage` | Hero product carousel + nearby rental map |
 | `/shop` | `ShopPage` | Seller dashboard with 4 tabs |
 | `/shop/new-listing` | `SellerUploadPosting` | Create a new listing form |
@@ -114,6 +114,7 @@ clothesrent/
 Four-tab sidebar layout. Displays the signed-in user's nickname/email. All tabs receive the Auth0 `user.sub` as `userId` and scope data to the current user.
 
 #### Tab: My Listings (`ListingsPanel`)
+
 - Fetches all seller listings from `GET /api/listings` and **filters by current user's Auth0 ID**
 - Displays **Cloudinary-optimized** images (smart crop 400×533, auto quality/format)
 - Title, description, price, daily rate, tags
@@ -124,6 +125,7 @@ Four-tab sidebar layout. Displays the signed-in user's nickname/email. All tabs 
 - Loading state, error state with retry, empty state
 
 #### Tab: Transaction Log (`TransactionsPanel`)
+
 - Fetches purchase records from `GET /api/purchases` and **filters by current user** (as buyer or seller)
 - Table view with **Cloudinary thumbnail** images (64×64 smart crop)
 - Shows **Buyer / Seller role pill** instead of raw IDs
@@ -131,6 +133,7 @@ Four-tab sidebar layout. Displays the signed-in user's nickname/email. All tabs 
 - Loading / error / empty states
 
 #### Tab: Thrift Out (`ThriftOutPanel`)
+
 - Fetches live listings from `GET /api/listings?status=Live`
 - **Style search bar** — searches via `POST /api/style/search` (Backboard vector → MongoDB fallback)
 - Clear button to reset to all live listings
@@ -153,13 +156,16 @@ Four-tab sidebar layout. Displays the signed-in user's nickname/email. All tabs 
 Three-step interactive listing creator with live AI transformation preview:
 
 #### Step 1: Upload
+
 - **Image upload** — selects a local file (jpg/png/webp), shows local preview
 - Click "Upload to Cloudinary" → `POST /api/upload`
 - Returns Cloudinary URL + publicId + auto-generated AI tags
 - Progress indicator during upload
 
 #### Step 2: Enhance (ImageTransformPanel)
+
 - **Before / After** side-by-side preview using live Cloudinary URL transformations
+- **Loading overlay on previews** - while transformed images are reloading, a spinner overlay appears so users always know changes are still processing
 - **AI Background Removal** toggle — removes the background, keeps the garment
 - **AI Background Replace** toggle + prompt input — generates a new background from a text prompt (e.g. "clean white studio", "urban street scene")
 - **Smart Crop** toggle — AI-aware crop that keeps the garment centered (on by default)
@@ -167,10 +173,12 @@ Three-step interactive listing creator with live AI transformation preview:
 - Auto optimization note (q_auto, f_auto always applied)
 
 #### Step 3: Details & Publish
+
 - Title, description, price (required)
 - Daily rate, comma-separated tags (optional)
 - **Auth0 `user.sub`** automatically sent as `sellerId`
 - Preview image shows the **transformed version** (Cloudinary URL with all step-2 transformations applied)
+- **Details preview loading overlay** appears while the final transformed image is still loading
 - Tag pills show a **live merged preview** of both Cloudinary auto-tags and any user-typed tags, updating as you type
 - Submits JSON body to `POST /api/listings` (includes pre-uploaded URL + publicId + transformation preferences)
 - Transformation preferences stored in database for consistent display
@@ -199,7 +207,7 @@ All backend communication is centralized in two files:
 ### `client.ts`
 
 | Export | Description |
-|--------|-------------|
+| --- | --- |
 | `API_BASE_URL` | Reads from `VITE_API_URL` env var, defaults to `http://localhost:5000` |
 | `apiFetch<T>(path, options)` | JSON fetch with error extraction |
 | `apiFormFetch<T>(path, formData)` | FormData POST (no Content-Type header — browser sets boundary) |
@@ -207,7 +215,7 @@ All backend communication is centralized in two files:
 ### `listings.ts`
 
 | Function | Method | Endpoint | Description |
-|----------|--------|----------|-------------|
+| --- | --- | --- | --- |
 | `fetchListings(status?)` | GET | `/api/listings` | Get all or filtered listings |
 | `fetchListingById(id)` | GET | `/api/listings/:id` | Single listing |
 | `uploadImage(formData)` | POST | `/api/upload` | Upload image only (returns URL + publicId + tags) |
@@ -223,7 +231,7 @@ All backend communication is centralized in two files:
 ## Components
 
 | Component | File | Props | Description |
-|-----------|------|-------|-------------|
+| --- | --- | --- | --- |
 | `Navbar` | `navBar.tsx` | — | Top nav with brand, Home/Shop links, a placeholder search form, and auth-aware actions (Sign In or Profile + Sign Out). Adds `scrolled` class on scroll |
 | `CloudinaryImage` | `CloudinaryImage.tsx` | `publicId, alt, width, height, className` | Renders optimized Cloudinary image via `@cloudinary/react` |
 | `ImageTransformPanel` | `ImageTransformPanel.tsx` | `cloudinaryUrl, onChange` | Interactive AI transformation controls with live before/after preview |
@@ -242,7 +250,7 @@ All backend communication is centralized in two files:
 Inserts transformation parameters into existing Cloudinary `secure_url` strings. All functions return a new URL string; the original is unchanged.
 
 | Function | Purpose | Cloudinary Params |
-|----------|---------|------------------|
+| --- | --- | --- |
 | `optimizeUrl(url)` | Auto quality + auto format | `q_auto,f_auto` |
 | `smartCropUrl(url, w, h)` | AI-aware crop to exact dimensions | `c_fill,g_auto,w_{w},h_{h},q_auto,f_auto` |
 | `removeBgUrl(url)` | AI background removal | `e_background_removal` |
@@ -252,6 +260,7 @@ Inserts transformation parameters into existing Cloudinary `secure_url` strings.
 | `thumbnailUrl(url, size)` | Square thumbnail for tables | `c_fill,g_auto,w_{size},h_{size},q_auto,f_auto` |
 
 **Usage in components:**
+
 ```typescript
 import { buildDisplayUrl, thumbnailUrl } from "../utils/cloudinaryUrl";
 
@@ -274,11 +283,11 @@ const thumbUrl = thumbnailUrl(purchase.cloudinaryUrl, 64);
 type ListingStatus = "Draft" | "Live" | "Paused" | "Sold";
 
 interface ImageTransformations {
-  removeBg: boolean;       // AI background removal
+  removeBg: boolean; // AI background removal
   replaceBg: string | null; // AI background replacement prompt
-  smartCrop: boolean;       // AI-aware smart crop
-  badge: string | null;     // Text badge overlay
-  badgeColor: string;       // Badge hex color (default "e74c3c")
+  smartCrop: boolean; // AI-aware smart crop
+  badge: string | null; // Text badge overlay
+  badgeColor: string; // Badge hex color (default "e74c3c")
 }
 
 interface Listing {
@@ -361,24 +370,24 @@ The app runs at `http://localhost:5173`.
 
 ## Available Scripts
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start Vite dev server with HMR |
-| `npm run build` | TypeScript check + production Vite build |
-| `npm run lint` | Run ESLint |
-| `npm run preview` | Preview production build locally |
+| Command           | Description                              |
+| ----------------- | ---------------------------------------- |
+| `npm run dev`     | Start Vite dev server with HMR           |
+| `npm run build`   | TypeScript check + production Vite build |
+| `npm run lint`    | Run ESLint                               |
+| `npm run preview` | Preview production build locally         |
 
 ---
 
 ## Auth0 Configuration
 
-| Setting | Value |
-|---------|-------|
-| Domain | `dev-b65r14eontgkyt0y.us.auth0.com` |
-| Client ID | `0RjoItM0to13cLRHdYLdBCd61OyiavWk` |
-| Redirect URI | `{origin}/profile` |
-| Signup | Screen hint → `signup` |
-| Logout | Returns to `/signin` |
+| Setting      | Value                               |
+| ------------ | ----------------------------------- |
+| Domain       | `dev-b65r14eontgkyt0y.us.auth0.com` |
+| Client ID    | `0RjoItM0to13cLRHdYLdBCd61OyiavWk`  |
+| Redirect URI | `{origin}/profile`                  |
+| Signup       | Screen hint → `signup`              |
+| Logout       | Returns to `/signin`                |
 
 ---
 
@@ -448,7 +457,7 @@ The app runs at `http://localhost:5173`.
 All images served through Cloudinary's CDN with transformations applied via URL params:
 
 | Context | Dimensions | Transformations |
-|---------|-----------|----------------|
+| --- | --- | --- |
 | Card images (Listings, ThriftOut) | 400 × 533 (3:4) | `c_fill,g_auto,q_auto,f_auto` + stored transforms |
 | Table thumbnails (Transactions) | 64 × 64 | `c_fill,g_auto,q_auto,f_auto` |
 | Conditional badge ("NEW") | Same as card | + `l_text:Arial_16_bold:NEW,...` overlay |
@@ -457,7 +466,3 @@ All images served through Cloudinary's CDN with transformations applied via URL 
 Display components (`ListingsPanel`, `ThriftOutPanel`) read the `listing.transformations` field from the database and pass it to `buildDisplayUrl()` so the seller's chosen enhancements are applied consistently everywhere the image is shown.
 
 Grid cards are capped at `max-width: 320px` with `auto-fill` layout (no stretching on wide screens). All images use `loading="lazy"` for deferred loading below the fold.
-
-
-
-

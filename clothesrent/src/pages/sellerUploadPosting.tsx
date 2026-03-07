@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
 import { uploadImage, createListing } from "../api/listings";
@@ -38,6 +38,7 @@ export default function SellerUploadPosting() {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const detailsImageRef = useRef<HTMLImageElement>(null);
 
   // Cloudinary state (set after upload)
   const [cloudinaryUrl, setCloudinaryUrl] = useState<string | null>(null);
@@ -48,6 +49,7 @@ export default function SellerUploadPosting() {
   const [transforms, setTransforms] = useState<ImageTransformations>({
     ...DEFAULT_TRANSFORMATIONS,
   });
+  const [isDetailsPreviewLoading, setIsDetailsPreviewLoading] = useState(false);
 
   // Details state
   const [draft, setDraft] = useState<ListingDraft>(INITIAL_DRAFT);
@@ -58,12 +60,37 @@ export default function SellerUploadPosting() {
   const canSubmit = useMemo(() => {
     return Boolean(
       draft.title.trim() &&
-        draft.description.trim() &&
-        draft.price.trim() &&
-        cloudinaryUrl &&
-        publicId
+      draft.description.trim() &&
+      draft.price.trim() &&
+      cloudinaryUrl &&
+      publicId,
     );
   }, [draft, cloudinaryUrl, publicId]);
+
+  const detailsPreviewUrl = useMemo(() => {
+    if (!cloudinaryUrl) return null;
+
+    return buildDisplayUrl(cloudinaryUrl, {
+      width: 400,
+      height: 533,
+      removeBg: transforms.removeBg,
+      replaceBg: transforms.replaceBg ?? undefined,
+      badge: transforms.badge ?? undefined,
+      badgeColor: transforms.badgeColor,
+    });
+  }, [
+    cloudinaryUrl,
+    transforms.badge,
+    transforms.badgeColor,
+    transforms.removeBg,
+    transforms.replaceBg,
+  ]);
+
+  useEffect(() => {
+    if (step === "details" && detailsPreviewUrl) {
+      setIsDetailsPreviewLoading(!(detailsImageRef.current?.complete ?? false));
+    }
+  }, [detailsPreviewUrl, step]);
 
   /** Live-preview of all tags that will be saved: auto-tags + user-entered tags */
   const allTagsPreview = useMemo(() => {
@@ -142,7 +169,7 @@ export default function SellerUploadPosting() {
       });
 
       setSubmitMessage(
-        `Listing "${result.item.title}" created successfully! Status: ${result.item.status}`
+        `Listing "${result.item.title}" created successfully! Status: ${result.item.status}`,
       );
       // Reset everything
       setDraft(INITIAL_DRAFT);
@@ -180,7 +207,8 @@ export default function SellerUploadPosting() {
             Create New Listing
           </h1>
           <p className="seller-posting-subtitle">
-            Upload your garment photo, enhance it with AI features, then publish.
+            Upload your garment photo, enhance it with AI features, then
+            publish.
           </p>
         </header>
 
@@ -194,8 +222,7 @@ export default function SellerUploadPosting() {
                 steps.findIndex((x) => x.key === s.key)
                   ? " seller-step--done"
                   : ""
-              }`}
-            >
+              }`}>
               {s.label}
             </div>
           ))}
@@ -230,8 +257,7 @@ export default function SellerUploadPosting() {
                 type="button"
                 className="btn-primary"
                 style={{ marginTop: "0.75rem" }}
-                onClick={() => fileInputRef.current?.click()}
-              >
+                onClick={() => fileInputRef.current?.click()}>
                 {selectedFile ? "Replace Photo" : "Upload Garment Photo"}
               </button>
               {selectedFile && (
@@ -251,8 +277,7 @@ export default function SellerUploadPosting() {
                 type="button"
                 className="btn-primary seller-submit-btn"
                 disabled={!selectedFile || uploading}
-                onClick={handleUpload}
-              >
+                onClick={handleUpload}>
                 {uploading ? "Uploading..." : "Upload to Cloudinary"}
               </button>
               {uploadProgress && (
@@ -279,15 +304,13 @@ export default function SellerUploadPosting() {
               <button
                 type="button"
                 className="btn-outline"
-                onClick={() => setStep("upload")}
-              >
+                onClick={() => setStep("upload")}>
                 ← Back
               </button>
               <button
                 type="button"
                 className="btn-primary"
-                onClick={() => setStep("details")}
-              >
+                onClick={() => setStep("details")}>
                 Continue to Details →
               </button>
             </div>
@@ -299,19 +322,31 @@ export default function SellerUploadPosting() {
           <div className="seller-posting-grid">
             <section className="seller-preview-panel">
               <div className="seller-preview-box">
-                {cloudinaryUrl && (
-                  <img
-                    src={buildDisplayUrl(cloudinaryUrl, {
-                      width: 400,
-                      height: 533,
-                      removeBg: transforms.removeBg,
-                      replaceBg: transforms.replaceBg ?? undefined,
-                      badge: transforms.badge ?? undefined,
-                      badgeColor: transforms.badgeColor,
-                    })}
-                    alt="Uploaded garment"
-                    className="seller-preview-image"
-                  />
+                {detailsPreviewUrl && (
+                  <>
+                    <img
+                      ref={detailsImageRef}
+                      src={detailsPreviewUrl}
+                      alt="Uploaded garment"
+                      className={`seller-preview-image${isDetailsPreviewLoading ? " seller-preview-image--loading" : ""}`}
+                      onLoad={() => setIsDetailsPreviewLoading(false)}
+                      onError={() => setIsDetailsPreviewLoading(false)}
+                    />
+                    {isDetailsPreviewLoading && (
+                      <div
+                        className="image-loading-overlay"
+                        role="status"
+                        aria-live="polite">
+                        <span
+                          className="image-loading-spinner"
+                          aria-hidden="true"
+                        />
+                        <span className="image-loading-text">
+                          Applying image changes...
+                        </span>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
               {allTagsPreview.length > 0 && (
@@ -341,7 +376,9 @@ export default function SellerUploadPosting() {
                 required
               />
 
-              <label htmlFor="listing-description" className="seller-field-label">
+              <label
+                htmlFor="listing-description"
+                className="seller-field-label">
                 Description
               </label>
               <textarea
@@ -407,15 +444,13 @@ export default function SellerUploadPosting() {
                 <button
                   type="button"
                   className="btn-outline"
-                  onClick={() => setStep("transform")}
-                >
+                  onClick={() => setStep("transform")}>
                   ← Back to Enhance
                 </button>
                 <button
                   type="submit"
                   className="btn-primary seller-submit-btn"
-                  disabled={!canSubmit || submitting}
-                >
+                  disabled={!canSubmit || submitting}>
                   {submitting ? "Creating Listing..." : "Publish Listing"}
                 </button>
               </div>
