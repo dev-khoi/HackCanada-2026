@@ -5,6 +5,7 @@ import { uploadImage, createListing } from "../api/listings";
 import type { ImageTransformations } from "../types/listing";
 import { DEFAULT_TRANSFORMATIONS } from "../types/listing";
 import ImageTransformPanel from "../components/ImageTransformPanel";
+import { buildDisplayUrl } from "../utils/cloudinaryUrl";
 import "./sellerUploadPosting.css";
 
 type ListingDraft = {
@@ -63,6 +64,17 @@ export default function SellerUploadPosting() {
         publicId
     );
   }, [draft, cloudinaryUrl, publicId]);
+
+  /** Live-preview of all tags that will be saved: auto-tags + user-entered tags */
+  const allTagsPreview = useMemo(() => {
+    const userTags = draft.tags.trim()
+      ? draft.tags
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean)
+      : [];
+    return [...new Set([...autoTags, ...userTags])];
+  }, [autoTags, draft.tags]);
 
   // ── Step 1: Select & Upload ──
 
@@ -289,15 +301,22 @@ export default function SellerUploadPosting() {
               <div className="seller-preview-box">
                 {cloudinaryUrl && (
                   <img
-                    src={cloudinaryUrl}
+                    src={buildDisplayUrl(cloudinaryUrl, {
+                      width: 400,
+                      height: 533,
+                      removeBg: transforms.removeBg,
+                      replaceBg: transforms.replaceBg ?? undefined,
+                      badge: transforms.badge ?? undefined,
+                      badgeColor: transforms.badgeColor,
+                    })}
                     alt="Uploaded garment"
                     className="seller-preview-image"
                   />
                 )}
               </div>
-              {autoTags.length > 0 && (
+              {allTagsPreview.length > 0 && (
                 <div className="shop-card-tags" style={{ marginTop: "0.6rem" }}>
-                  {autoTags.map((tag) => (
+                  {allTagsPreview.map((tag) => (
                     <span key={tag} className="shop-tag">
                       {tag}
                     </span>

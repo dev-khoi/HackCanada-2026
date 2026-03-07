@@ -157,7 +157,8 @@ Three-step interactive listing creator with live AI transformation preview:
 - Title, description, price (required)
 - Daily rate, comma-separated tags (optional)
 - **Auth0 `user.sub`** automatically sent as `sellerId`
-- Auto-tags from Cloudinary shown as pills
+- Preview image shows the **transformed version** (Cloudinary URL with all step-2 transformations applied)
+- Tag pills show a **live merged preview** of both Cloudinary auto-tags and any user-typed tags, updating as you type
 - Submits JSON body to `POST /api/listings` (includes pre-uploaded URL + publicId + transformation preferences)
 - Transformation preferences stored in database for consistent display
 - Success message shown, all state resets to Step 1
@@ -381,9 +382,10 @@ The app runs at `http://localhost:5173`.
 5. Step 3 — Details & Publish:
    a. Fill in title, description, price (required)
    b. Optional: daily rate, comma-separated tags
-   c. Auto-tags from Cloudinary shown as pills
-   d. Auth0 user.sub auto-included as sellerId
-   e. Click "Publish Listing"
+   c. Preview image shows the **transformed version** (with all step-2 AI effects applied)
+   d. Tag pills show a **live merged preview** of Cloudinary auto-tags + user-typed tags
+   e. Auth0 user.sub auto-included as sellerId
+   f. Click "Publish Listing"
 6. Frontend sends JSON body → POST /api/listings
    (includes cloudinaryUrl, publicId, autoTags, transformations preferences)
 7. Backend saves listing to MongoDB with transformation preferences
