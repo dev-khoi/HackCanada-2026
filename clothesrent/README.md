@@ -2,6 +2,9 @@
 
 ## Recent Updates (March 7, 2026)
 
+- Frontend API base URL now reads directly from `VITE_API_URL` (removed hardcoded localhost fallback).
+- Added `public/_redirects` with SPA fallback rule for static hosting (`/* /index.html 200`).
+- Vite build output is now explicitly configured to `dist` in `vite.config.ts`.
 - Thrift Out cards now show `Listed by` under location with a clickable seller profile link.
 - Added profile route support for `/profile/:auth0Id` to view public seller profiles.
 - Profile saves now sync public fields (name, picture, location) to backend via `/api/users/:auth0Id/public`.
@@ -224,7 +227,7 @@ All backend communication is centralized in two files:
 
 | Export | Description |
 | --- | --- |
-| `API_BASE_URL` | Reads from `VITE_API_URL` env var, defaults to `http://localhost:5000` |
+| `API_BASE_URL` | Reads from `VITE_API_URL` env var |
 | `apiFetch<T>(path, options)` | JSON fetch with error extraction |
 | `apiFormFetch<T>(path, formData)` | FormData POST (no Content-Type header — browser sets boundary) |
 
@@ -362,7 +365,7 @@ Create `.env.local`:
 VITE_CLOUDINARY_CLOUD_NAME=your_cloud_name
 VITE_CLOUDINARY_UPLOAD_PRESET=your_upload_preset
 
-# Optional — override backend URL (defaults to http://localhost:5000)
+# Required � backend API base URL
 VITE_API_URL=http://localhost:5000
 ```
 
@@ -482,6 +485,9 @@ All images served through Cloudinary's CDN with transformations applied via URL 
 Display components (`ListingsPanel`, `ThriftOutPanel`) read the `listing.transformations` field from the database and pass it to `buildDisplayUrl()` so the seller's chosen enhancements are applied consistently everywhere the image is shown.
 
 Grid cards are capped at `max-width: 320px` with `auto-fill` layout (no stretching on wide screens). All images use `loading="lazy"` for deferred loading below the fold.
+
+
+
 
 
 

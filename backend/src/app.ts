@@ -9,7 +9,24 @@ import outfitRoutes from "./routes/outfitRoutes";
 
 const app = express();
 
-app.use(cors());
+const allowedOrigins = [
+  "https://threadify.pages.dev",
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error("Origin not allowed by CORS"));
+    },
+  }),
+);
 app.use(express.json({ limit: "50mb" }));
 
 app.use("/api/listings", listingRoutes);

@@ -2,6 +2,7 @@
 
 ## Recent Updates (March 7, 2026)
 
+- CORS now includes `https://threadify.pages.dev` in the backend allowed origins list.
 - UserItemSell now stores sellerName in addition to sellerId so listing cards can show creator names.
 - POST /api/listings now accepts optional sellerName and persists it.
 - Added public profile endpoints: GET /api/users/:auth0Id/public and PUT /api/users/:auth0Id/public.
