@@ -14,23 +14,7 @@ type Product = {
   badge: string | null
 }
 
-type Listing = {
-  id: number
-  title: string
-  type: 'Rent' | 'Sell'
-  price: string
-  status: string
-}
-
-type Transaction = {
-  id: number
-  item: string
-  amount: string
-  role: 'Buyer' | 'Seller' | 'Renter'
-  date: string
-}
-
-const NAV_LINKS = ['Home', 'Shop', 'New Arrivals', 'Men', 'Women', 'Contact']
+const NAV_LINKS = ["Home", "Shop", "New Arrivals", "Men", "Women", "Contact"];
 
 const PRODUCTS: Product[] = [
   {
@@ -117,18 +101,6 @@ const NEARBY_RENTAL_SPOTS = [
   { id: 1, name: 'Downtown Wardrobe Hub', lat: 43.6524, lng: -79.3839, eta: '12 min' },
   { id: 2, name: 'Queen St Rental Closet', lat: 43.6467, lng: -79.3936, eta: '8 min' },
   { id: 3, name: 'Harbourfront Style Point', lat: 43.6388, lng: -79.3817, eta: '15 min' },
-]
-
-const DASHBOARD_LISTINGS: Listing[] = [
-  { id: 1, title: 'Black Lace Corset', type: 'Rent', price: '$28/day', status: 'Active' },
-  { id: 2, title: 'Platform Combat Boots', type: 'Sell', price: '$95', status: 'Active' },
-  { id: 3, title: 'Velvet Trench Coat', type: 'Rent', price: '$42/day', status: 'Paused' },
-]
-
-const DASHBOARD_TRANSACTIONS: Transaction[] = [
-  { id: 1, item: 'Mesh Layered Skirt', amount: '$36', role: 'Buyer', date: 'Feb 24, 2026' },
-  { id: 2, item: 'Studded Belt Bundle', amount: '$52', role: 'Seller', date: 'Feb 17, 2026' },
-  { id: 3, item: 'Leather Jacket Rental', amount: '$30', role: 'Renter', date: 'Feb 09, 2026' },
 ]
 
 function Navbar() {
@@ -396,138 +368,6 @@ function UploadImage() {
   return <UploadPhotoButton />;
 }
 
-type DashboardSection = 'about' | 'listings' | 'transactions' | 'thriftify'
-
-function UserDashboard({
-  user,
-  logout,
-}: {
-  user: { name?: string; email?: string; picture?: string; [key: string]: unknown } | undefined
-  logout: () => void
-}) {
-  const [activeSection, setActiveSection] = useState<DashboardSection>('about')
-  const stylePreference =
-    (typeof user?.style === 'string' && user.style) ||
-    (typeof user?.user_metadata === 'object' &&
-      user.user_metadata &&
-      'style' in user.user_metadata &&
-      typeof (user.user_metadata as { style?: unknown }).style === 'string' &&
-      (user.user_metadata as { style?: string }).style) ||
-    'Goth'
-
-  return (
-    <main className="dashboard-page">
-      <aside className="dashboard-sidebar">
-        <div>
-          <div className="dashboard-brand">Thriftify</div>
-          <div className="dashboard-menu">
-            <button
-              type="button"
-              className={`dashboard-menu-item${activeSection === 'about' ? ' active' : ''}`}
-              onClick={() => setActiveSection('about')}
-            >
-              About me
-            </button>
-            <button
-              type="button"
-              className={`dashboard-menu-item${activeSection === 'listings' ? ' active' : ''}`}
-              onClick={() => setActiveSection('listings')}
-            >
-              My Listings
-            </button>
-            <button
-              type="button"
-              className={`dashboard-menu-item${activeSection === 'transactions' ? ' active' : ''}`}
-              onClick={() => setActiveSection('transactions')}
-            >
-              Transactions
-            </button>
-            <button
-              type="button"
-              className="dashboard-thriftify-btn"
-              onClick={() => setActiveSection('thriftify')}
-            >
-              Thriftify
-            </button>
-          </div>
-        </div>
-
-        <button type="button" className="btn-outline dashboard-logout" onClick={logout}>
-          Logout
-        </button>
-      </aside>
-
-      <section className="dashboard-content">
-        {activeSection === 'about' && (
-          <article className="dashboard-panel">
-            <h1 className="font-display dashboard-title">About me</h1>
-            <div className="about-profile-row">
-              {user?.picture ? (
-                <img src={user.picture} alt="Profile" className="about-avatar" />
-              ) : (
-                <div className="about-avatar about-avatar-fallback">{(user?.name ?? 'U').slice(0, 1)}</div>
-              )}
-              <div>
-                <h2 className="about-name">{user?.name ?? 'Your profile'}</h2>
-                <p className="about-email">{user?.email ?? 'No email available'}</p>
-                <p className="about-style">
-                  Style: <span>{stylePreference}</span>
-                </p>
-              </div>
-            </div>
-          </article>
-        )}
-
-        {activeSection === 'listings' && (
-          <article className="dashboard-panel">
-            <h1 className="font-display dashboard-title">My Listings</h1>
-            <div className="dashboard-grid">
-              {DASHBOARD_LISTINGS.map((listing) => (
-                <div key={listing.id} className="dashboard-card">
-                  <div className="dashboard-card-top">
-                    <h3>{listing.title}</h3>
-                    <span className="listing-tag">{listing.type}</span>
-                  </div>
-                  <p className="dashboard-meta">{listing.price}</p>
-                  <p className="dashboard-status">{listing.status}</p>
-                </div>
-              ))}
-            </div>
-          </article>
-        )}
-
-        {activeSection === 'transactions' && (
-          <article className="dashboard-panel">
-            <h1 className="font-display dashboard-title">Transactions</h1>
-            <div className="dashboard-grid">
-              {DASHBOARD_TRANSACTIONS.map((transaction) => (
-                <div key={transaction.id} className="dashboard-card">
-                  <div className="dashboard-card-top">
-                    <h3>{transaction.item}</h3>
-                    <span className="listing-tag">{transaction.role}</span>
-                  </div>
-                  <p className="dashboard-meta">{transaction.amount}</p>
-                  <p className="dashboard-status">{transaction.date}</p>
-                </div>
-              ))}
-            </div>
-          </article>
-        )}
-
-        {activeSection === 'thriftify' && (
-          <article className="dashboard-panel" id="create-listing">
-            <h1 className="font-display dashboard-title">Create a Listing</h1>
-            <p className="dashboard-meta">List a piece for rent or sale and connect with nearby shoppers.</p>
-            <button type="button" className="btn-primary dashboard-create-btn">
-              Start New Listing
-            </button>
-          </article>
-        )}
-      </section>
-    </main>
-  )
-}
-
 function SignInPage() {
   const { isLoading, isAuthenticated, error, loginWithRedirect: login, logout: auth0Logout, user } = useAuth0()
 
@@ -546,7 +386,21 @@ function SignInPage() {
   }
 
   if (isAuthenticated) {
-    return <UserDashboard user={user} logout={logout} />
+    return (
+      <main className="auth-page">
+        <section className="auth-card">
+          <a href="/" className="auth-home-link">
+            Back to Home
+          </a>
+          <p className="auth-subtitle">Logged in as {user?.email ?? 'your account'}</p>
+          <h1 className="font-display auth-title">User Profile</h1>
+          <pre className="auth-pre">{JSON.stringify(user, null, 2)}</pre>
+          <button type="button" className="btn-primary auth-btn" onClick={logout}>
+            Logout
+          </button>
+        </section>
+      </main>
+    )
   }
 
   return (
