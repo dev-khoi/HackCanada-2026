@@ -64,10 +64,7 @@ export async function extractImageTags(
   };
 
   const prompt =
-    "You are an expert fashion analyst. Analyze this clothing image and extract 5-8 relevant searchable tags. " +
-    "Tags should include: item type (e.g., 'blazer', 'trousers', 'dress'), color(s), style/aesthetic (e.g., 'minimalist', 'vintage', 'casual'), " +
-    "material hints if visible (e.g., 'wool', 'linen', 'silk'), and any notable features. " +
-    'Return ONLY a valid JSON array of lowercase tags (strings), no other text. Example: ["blazer", "navy", "wool", "minimalist", "tailored"]';
+    'You are a high-end fashion stylist and aesthetic curator. Analyze this clothing image to extract a deep stylistic profile. Focus on the "vibe" and "persona" rather than just technical labels. Identify 6–10 tags including: The Aesthetic: (e.g., "coastal grandmother", "streetwear", "old money", "gorpcore", "y2k nomad") The Mood/Vibe: (e.g., "ethereal", "rugged", "refined", "playful"). The Occasion: (e.g., "gallery opening", "brunch", "festival", "office core"). The Silhouette: (e.g., "oversized", "sculptural", "relaxed", "tailored"). Standard Details: item type, primary color, and visible texture. Return ONLY a valid JSON array of lowercase strings. Example: ["coastal grandmother", "linen", "relaxed", "ethereal", "beach wedding", "button-up", "white"]';
 
   const result = await model.generateContent([prompt, imagePart]);
   const text = result.response.text().trim();

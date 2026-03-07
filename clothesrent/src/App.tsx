@@ -16,7 +16,7 @@ import {
   type UserProfileData,
 } from "./utils/profileStorage";
 import { geocodeAddressToCoords } from "./utils/location";
-import { fetchListings } from "./api/listings";
+import { fetchListings, fetchPublicUserProfile } from "./api/listings";
 import type { Listing } from "./types/listing";
 import { buildDisplayUrl } from "./utils/cloudinaryUrl";
 
@@ -539,8 +539,45 @@ export default function App({
   recommendations?: Listing[];
   onClearRecommendations?: () => void;
 }) {
-  const { isAuthenticated, isLoading } = useAuth0();
+  const { isAuthenticated, isLoading, user } = useAuth0();
   const path = window.location.pathname;
+  const profileMatch = path.match(/^\/profile\/(.+)$/);
+  const profileUserId = profileMatch ? decodeURIComponent(profileMatch[1]) : null;
+  const [isCheckingRequiredProfile, setIsCheckingRequiredProfile] = useState(false);
+  const [mustSetProfileName, setMustSetProfileName] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadRequiredNameState = async () => {
+      if (!isAuthenticated || !user?.sub) {
+        setMustSetProfileName(false);
+        setIsCheckingRequiredProfile(false);
+        return;
+      }
+
+      setIsCheckingRequiredProfile(true);
+      try {
+        const publicProfile = await fetchPublicUserProfile(user.sub);
+        if (!cancelled) {
+          setMustSetProfileName(!publicProfile.name.trim());
+        }
+      } catch {
+        if (!cancelled) {
+          setMustSetProfileName(true);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsCheckingRequiredProfile(false);
+        }
+      }
+    };
+
+    loadRequiredNameState();
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated, user?.sub]);
 
   // Protect routes that require authentication
   const protectedRoutes = ["/shop/new-listing", "/shop", "/profile"];
@@ -559,9 +596,23 @@ export default function App({
     );
   }
 
+  if (isAuthenticated && isCheckingRequiredProfile) {
+    return (
+      <main className="auth-page">
+        <section className="auth-card">
+          <h1 className="font-display auth-title">Loading...</h1>
+        </section>
+      </main>
+    );
+  }
+
   // Redirect unauthenticated users away from protected routes
   if (!isAuthenticated && isAccessingProtectedRoute) {
     return <SignInPage />;
+  }
+
+  if (isAuthenticated && mustSetProfileName && !path.startsWith("/profile")) {
+    return <ProfilePage requireName />;
   }
 
   if (path === "/signin") {
@@ -577,7 +628,11 @@ export default function App({
   }
 
   if (path === "/profile") {
-    return <ProfilePage />;
+    return <ProfilePage requireName={mustSetProfileName} />;
+  }
+
+  if (profileUserId) {
+    return <ProfilePage profileUserId={profileUserId} />;
   }
 
   if (path === "/outfit" || path === "/wardrobe") {

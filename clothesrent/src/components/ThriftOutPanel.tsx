@@ -326,6 +326,18 @@ export default function ThriftOutPanel({ userId }: Props) {
               {item.location && (
                 <p className="shop-card-meta shop-card-location">Location: {item.location}</p>
               )}
+              <p className="shop-card-meta shop-card-location">
+                Listed by:{" "}
+                {item.sellerId ? (
+                  <a
+                    className="shop-card-user-link"
+                    href={`/profile/${encodeURIComponent(item.sellerId)}`}>
+                    {item.sellerName?.trim() || item.sellerId}
+                  </a>
+                ) : (
+                  "Unknown seller"
+                )}
+              </p>
               {itemDistance != null && (
                 <p className="shop-card-meta shop-card-location">
                   Distance: {itemDistance.toFixed(1)} km

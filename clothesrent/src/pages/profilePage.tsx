@@ -9,10 +9,21 @@ import {
 } from "../utils/profileStorage";
 import LocationAutocompleteInput from "../components/LocationAutocompleteInput";
 import { reverseGeocodeToSimpleAddress } from "../utils/location";
+import {
+  fetchPublicUserProfile,
+  savePublicUserProfile,
+} from "../api/listings";
 
-export default function ProfilePage() {
+interface ProfilePageProps {
+  profileUserId?: string;
+  requireName?: boolean;
+}
+
+export default function ProfilePage({ profileUserId, requireName = false }: ProfilePageProps) {
   const { user } = useAuth0();
-  const userId = useMemo(() => user?.sub ?? "anonymous", [user?.sub]);
+  const authUserId = useMemo(() => user?.sub ?? "anonymous", [user?.sub]);
+  const viewedUserId = profileUserId ?? authUserId;
+  const isOwnProfile = !profileUserId || profileUserId === authUserId;
 
   const [name, setName] = useState("");
   const [style, setStyle] = useState("");
@@ -21,6 +32,8 @@ export default function ProfilePage() {
   const [saved, setSaved] = useState(false);
   const [locationBusy, setLocationBusy] = useState(false);
   const [locationMessage, setLocationMessage] = useState<string | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState(false);
+  const [nameError, setNameError] = useState<string | null>(null);
 
   useEffect(() => {
     const fallback: UserProfileData = {
@@ -29,14 +42,50 @@ export default function ProfilePage() {
       picture: user?.picture ?? "",
       location: "",
     };
-    const profile = loadUserProfile(userId, fallback);
-    setName(profile.name);
-    setStyle(profile.style);
-    setPicture(profile.picture);
-    setLocation(profile.location);
-  }, [userId, user?.name, user?.nickname, user?.picture]);
+
+    if (isOwnProfile) {
+      const profile = loadUserProfile(authUserId, fallback);
+      setName(profile.name);
+      setStyle(profile.style);
+      setPicture(profile.picture);
+      setLocation(profile.location);
+      fetchPublicUserProfile(authUserId)
+        .then((publicProfile) => {
+          if (publicProfile.name) setName(publicProfile.name);
+          if (publicProfile.picture) setPicture(publicProfile.picture);
+          if (publicProfile.location) setLocation(publicProfile.location);
+        })
+        .catch(() => {});
+      return;
+    }
+
+    setLoadingProfile(true);
+    fetchPublicUserProfile(viewedUserId)
+      .then((publicProfile) => {
+        setName(publicProfile.name || viewedUserId);
+        setPicture(publicProfile.picture || "");
+        setLocation(publicProfile.location || "");
+        setStyle("");
+      })
+      .catch(() => {
+        setName(viewedUserId);
+        setPicture("");
+        setLocation("");
+        setStyle("");
+      })
+      .finally(() => setLoadingProfile(false));
+  }, [
+    authUserId,
+    isOwnProfile,
+    user?.name,
+    user?.nickname,
+    user?.picture,
+    viewedUserId,
+  ]);
 
   useEffect(() => {
+    if (!isOwnProfile) return;
+
     const handleProfileUpdated = (event: Event) => {
       const customEvent = event as CustomEvent<UserProfileData>;
       const updated = customEvent.detail;
@@ -52,7 +101,7 @@ export default function ProfilePage() {
     return () => {
       window.removeEventListener(PROFILE_UPDATED_EVENT, handleProfileUpdated);
     };
-  }, []);
+  }, [isOwnProfile]);
 
   const handlePictureChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -69,8 +118,21 @@ export default function ProfilePage() {
   };
 
   const handleSave = () => {
+    if (isOwnProfile && !name.trim()) {
+      setNameError("Name is required.");
+      setSaved(false);
+      return;
+    }
+
     const payload: UserProfileData = { name, style, picture, location };
-    saveUserProfile(userId, payload);
+    saveUserProfile(authUserId, payload);
+    savePublicUserProfile(authUserId, {
+      name,
+      picture,
+      location,
+      email: user?.email,
+    }).catch(() => {});
+    setNameError(null);
     setSaved(true);
   };
 
@@ -113,11 +175,54 @@ export default function ProfilePage() {
     );
   };
 
+  if (loadingProfile) {
+    return (
+      <main className="profile-page">
+        <section className="profile-card">
+          <h1 className="font-display profile-title">Profile</h1>
+          <p className="profile-subtitle">Loading profile...</p>
+        </section>
+      </main>
+    );
+  }
+
+  if (!isOwnProfile) {
+    return (
+      <main className="profile-page">
+        <section className="profile-card">
+          <a href="/shop" className="profile-back-link">
+            Back to Shop
+          </a>
+          <h1 className="font-display profile-title">{name || "User Profile"}</h1>
+          <p className="profile-subtitle">Public seller profile.</p>
+
+          <div className="profile-picture-wrap">
+            {picture ? (
+              <img src={picture} alt="User profile" className="profile-picture" />
+            ) : (
+              <div className="profile-picture profile-picture-fallback">No Image</div>
+            )}
+          </div>
+
+          <label className="profile-label">Name</label>
+          <p className="profile-readonly-field">{name || viewedUserId}</p>
+
+          <label className="profile-label">Location</label>
+          <p className="profile-readonly-field">{location || "Not provided"}</p>
+        </section>
+      </main>
+    );
+  }
+
   return (
     <main className="profile-page">
       <section className="profile-card">
         <h1 className="font-display profile-title">Profile</h1>
-        <p className="profile-subtitle">Manage your look and style identity.</p>
+        <p className="profile-subtitle">
+          {requireName
+            ? "Set your profile name to continue. Name is required."
+            : "Manage your look and style identity."}
+        </p>
 
         <div className="profile-picture-wrap">
           {picture ? (
@@ -148,8 +253,21 @@ export default function ProfilePage() {
           onChange={(event) => {
             setName(event.target.value);
             setSaved(false);
+            setNameError(null);
           }}
           placeholder="Your name"
+          required
+        />
+        {nameError && <p className="profile-error-message">{nameError}</p>}
+
+        <label className="profile-label" htmlFor="profile-email">
+          Email
+        </label>
+        <input
+          id="profile-email"
+          className="profile-input"
+          value={user?.email ?? ""}
+          readOnly
         />
 
         <label className="profile-label" htmlFor="profile-style">

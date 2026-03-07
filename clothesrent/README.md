@@ -1,4 +1,14 @@
-# ClothesRent — Frontend
+# ClothesRent - Frontend
+
+## Recent Updates (March 7, 2026)
+
+- Thrift Out cards now show `Listed by` under location with a clickable seller profile link.
+- Added profile route support for `/profile/:auth0Id` to view public seller profiles.
+- Profile saves now sync public fields (name, picture, location) to backend via `/api/users/:auth0Id/public`.
+- Listing publish now sends `sellerName` so new listings display creator names immediately.
+- Profile page now separates `Name` and `Email` fields, with email shown read-only.
+- App flow now requires users to set a profile name before using non-profile pages after sign-in.
+- Thrift Out creator labels now follow profile names (resolved from backend user profile), not fallback auth identity strings.
 
 Peer-to-peer clothing rental & resale marketplace. Built with React + TypeScript + Vite, powered by Auth0, Cloudinary, Leaflet maps, and a custom Express backend.
 
@@ -472,6 +482,7 @@ All images served through Cloudinary's CDN with transformations applied via URL 
 Display components (`ListingsPanel`, `ThriftOutPanel`) read the `listing.transformations` field from the database and pass it to `buildDisplayUrl()` so the seller's chosen enhancements are applied consistently everywhere the image is shown.
 
 Grid cards are capped at `max-width: 320px` with `auto-fill` layout (no stretching on wide screens). All images use `loading="lazy"` for deferred loading below the fold.
+
 
 
 

@@ -19,6 +19,7 @@ export const DEFAULT_TRANSFORMATIONS: ImageTransformations = {
 export interface Listing {
   _id: string;
   sellerId: string;
+  sellerName?: string;
   title: string;
   description: string;
   price: number;
@@ -54,6 +55,7 @@ export interface UploadImageResponse {
 
 export interface CreateListingBody {
   sellerId?: string;
+  sellerName?: string;
   title: string;
   description: string;
   price: number;

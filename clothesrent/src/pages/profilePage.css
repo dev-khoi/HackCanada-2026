@@ -24,6 +24,14 @@
   font-size: 0.88rem;
 }
 
+.profile-back-link {
+  display: inline-block;
+  margin-bottom: 0.6rem;
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .profile-picture-wrap {
   margin-top: 1.3rem;
   margin-bottom: 1rem;
@@ -108,4 +116,19 @@
 .profile-location-message {
   color: var(--warm-grey);
   font-size: 0.76rem;
+}
+
+.profile-error-message {
+  margin-top: 0.35rem;
+  color: #a33;
+  font-size: 0.78rem;
+}
+
+.profile-readonly-field {
+  margin: 0;
+  padding: 0.72rem 0.8rem;
+  border: 1px solid rgb(28 28 28 / 12%);
+  background: rgb(255 255 255 / 65%);
+  color: var(--ink);
+  font-size: 0.92rem;
 }

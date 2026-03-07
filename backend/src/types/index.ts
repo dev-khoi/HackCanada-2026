@@ -4,6 +4,8 @@ export interface IUser extends Document {
   auth0Id: string;
   email: string;
   username: string;
+  picture?: string;
+  location?: string;
   backboardProfileRef?: string;
   styleProfileJSON?: object;
 }
@@ -18,6 +20,7 @@ export interface ImageTransformations {
 
 export interface IUserItemSell extends Document {
   sellerId: string;
+  sellerName: string;
   title: string;
   description: string;
   price: number;
@@ -46,6 +49,7 @@ export interface IUserItemBuy extends Document {
 
 export interface CreateListingBody {
   sellerId?: string;
+  sellerName?: string;
   title: string;
   description: string;
   price: number;

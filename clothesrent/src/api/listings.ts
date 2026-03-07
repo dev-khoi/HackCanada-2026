@@ -121,6 +121,31 @@ export async function getUserStyle(
   );
 }
 
+export interface PublicUserProfile {
+  auth0Id: string;
+  name: string;
+  picture: string;
+  location: string;
+}
+
+export async function fetchPublicUserProfile(
+  auth0Id: string
+): Promise<PublicUserProfile> {
+  return apiFetch<PublicUserProfile>(
+    `/api/users/${encodeURIComponent(auth0Id)}/public`
+  );
+}
+
+export async function savePublicUserProfile(
+  auth0Id: string,
+  data: { name?: string; picture?: string; location?: string; email?: string }
+): Promise<PublicUserProfile> {
+  return apiFetch<PublicUserProfile>(
+    `/api/users/${encodeURIComponent(auth0Id)}/public`,
+    { method: "PUT", body: JSON.stringify(data) }
+  );
+}
+
 export async function saveUserStyle(
   auth0Id: string,
   data: { prompt?: string; descriptions?: string[] }
