@@ -84,7 +84,7 @@ function ListingCard({ listing }: { listing: Listing }) {
         )}
         {badge && <span className="card-badge">{badge}</span>}
         <div className="card-overlay">
-          <a href="/shop" className="btn-primary quick-add">View</a>
+          <a href={`/listing/${listing._id}`} className="btn-primary quick-add">View</a>
         </div>
       </div>
       <div className="card-body">
