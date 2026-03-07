@@ -1,8 +1,13 @@
 import { useEffect, useState } from "react";
 import { fetchPurchases } from "../api/listings";
 import type { Purchase } from "../types/listing";
+import { thumbnailUrl } from "../utils/cloudinaryUrl";
 
-export default function TransactionsPanel() {
+interface Props {
+  userId: string;
+}
+
+export default function TransactionsPanel({ userId }: Props) {
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -13,7 +18,13 @@ export default function TransactionsPanel() {
       setError(null);
       try {
         const data = await fetchPurchases();
-        setPurchases(data);
+        // Show purchases relevant to this user (as buyer or seller)
+        const mine = userId
+          ? data.filter(
+              (p) => p.buyerId === userId || p.sellerId === userId
+            )
+          : data;
+        setPurchases(mine);
       } catch (err: any) {
         setError(err.message || "Failed to load transactions");
       } finally {
@@ -21,7 +32,7 @@ export default function TransactionsPanel() {
       }
     };
     load();
-  }, []);
+  }, [userId]);
 
   if (loading) {
     return <p className="shop-section-subtitle">Loading transactions...</p>;
@@ -49,44 +60,55 @@ export default function TransactionsPanel() {
             <th>Image</th>
             <th>Item</th>
             <th>Price</th>
-            <th>Buyer</th>
+            <th>Role</th>
             <th>Date</th>
             <th>Tags</th>
           </tr>
         </thead>
         <tbody>
-          {purchases.map((purchase) => (
-            <tr key={purchase._id}>
-              <td>
-                {purchase.cloudinaryUrl && (
-                  <img
-                    src={purchase.cloudinaryUrl}
-                    alt={purchase.title}
-                    className="shop-table-img"
-                  />
-                )}
-              </td>
-              <td>{purchase.title}</td>
-              <td>${purchase.price}</td>
-              <td className="shop-table-id">{purchase.buyerId}</td>
-              <td>
-                {new Date(purchase.purchaseDate).toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "2-digit",
-                  year: "numeric",
-                })}
-              </td>
-              <td>
-                <div className="shop-card-tags">
-                  {purchase.tags.map((tag) => (
-                    <span key={tag} className="shop-tag">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </td>
-            </tr>
-          ))}
+          {purchases.map((purchase) => {
+            const role =
+              purchase.buyerId === userId ? "Buyer" : "Seller";
+
+            return (
+              <tr key={purchase._id}>
+                <td>
+                  {purchase.cloudinaryUrl && (
+                    <img
+                      src={thumbnailUrl(purchase.cloudinaryUrl, 64)}
+                      alt={purchase.title}
+                      className="shop-table-img"
+                      loading="lazy"
+                    />
+                  )}
+                </td>
+                <td>{purchase.title}</td>
+                <td>${purchase.price}</td>
+                <td>
+                  <span
+                    className={`shop-pill shop-pill-${role.toLowerCase()}`}>
+                    {role}
+                  </span>
+                </td>
+                <td>
+                  {new Date(purchase.purchaseDate).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "2-digit",
+                    year: "numeric",
+                  })}
+                </td>
+                <td>
+                  <div className="shop-card-tags">
+                    {purchase.tags.map((tag) => (
+                      <span key={tag} className="shop-tag">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

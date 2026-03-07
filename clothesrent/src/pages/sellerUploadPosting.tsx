@@ -1,5 +1,6 @@
 import { useMemo, useState, useRef } from "react";
 import type { FormEvent } from "react";
+import { useAuth0 } from "@auth0/auth0-react";
 import { createListing } from "../api/listings";
 import "./sellerUploadPosting.css";
 
@@ -20,6 +21,7 @@ const INITIAL_DRAFT: ListingDraft = {
 };
 
 export default function SellerUploadPosting() {
+  const { user } = useAuth0();
   const [draft, setDraft] = useState<ListingDraft>(INITIAL_DRAFT);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -59,6 +61,7 @@ export default function SellerUploadPosting() {
       formData.append("description", draft.description.trim());
       formData.append("price", draft.price);
       if (draft.dailyRate) formData.append("dailyRate", draft.dailyRate);
+      if (user?.sub) formData.append("sellerId", user.sub);
       if (draft.tags.trim()) {
         draft.tags
           .split(",")

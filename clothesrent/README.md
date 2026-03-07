@@ -64,7 +64,8 @@ clothesrent/
 │   │   └── listing.ts             # Shared TypeScript types (Listing, Purchase)
 │   │
 │   ├── utils/
-│   │   └── cloudinary.ts          # Cloudinary SDK init helper
+│   │   ├── cloudinary.ts          # Cloudinary SDK init helper
+│   │   └── cloudinaryUrl.ts       # URL transformation utility (AI features)
 │   │
 │   ├── App.tsx                    # Router + all page components
 │   ├── App.css                    # Global app styles
@@ -104,11 +105,12 @@ clothesrent/
 
 ### 2. Seller Dashboard (`/shop`)
 
-Three-tab sidebar layout:
+Three-tab sidebar layout. Displays the signed-in user's nickname/email. All tabs receive the Auth0 `user.sub` as `userId` and scope data to the current user.
 
 #### Tab: My Listings (`ListingsPanel`)
-- Fetches all seller listings from `GET /api/listings`
-- Displays Cloudinary images, title, description, price, daily rate, tags
+- Fetches all seller listings from `GET /api/listings` and **filters by current user's Auth0 ID**
+- Displays **Cloudinary-optimized** images (smart crop 400×533, auto quality/format)
+- Title, description, price, daily rate, tags
 - Status badges: **Live** (green), **Draft** / **Paused** (grey), **Sold** (red)
 - **Pause / Go Live** toggle button per listing
 - **Delete** button with confirmation
@@ -116,23 +118,28 @@ Three-tab sidebar layout:
 - Loading state, error state with retry, empty state
 
 #### Tab: Transaction Log (`TransactionsPanel`)
-- Fetches purchase records from `GET /api/purchases`
-- Table view: image thumbnail, item title, price, buyer ID, date, tags
+- Fetches purchase records from `GET /api/purchases` and **filters by current user** (as buyer or seller)
+- Table view with **Cloudinary thumbnail** images (64×64 smart crop)
+- Shows **Buyer / Seller role pill** instead of raw IDs
+- Item title, price, date, tags
 - Loading / error / empty states
 
 #### Tab: Thrift Out (`ThriftOutPanel`)
 - Fetches live listings from `GET /api/listings?status=Live`
 - **Style search bar** — searches via `POST /api/style/search` (Backboard vector → MongoDB fallback)
 - Clear button to reset to all live listings
-- **Purchase button** per item — prompts for buyer ID, calls `POST /api/listings/:id/purchase`
+- **Auth0-powered purchases** — uses signed-in user's Auth0 ID as `buyerId` (no manual prompt)
+- **"Your listing" pill** shown on items where `sellerId === userId` — purchase button hidden
+- **Conditional "NEW" badge** — items created within the last 24 hours display a red "NEW" overlay via Cloudinary URL transformation
+- **Cloudinary-optimized images** — smart crop (400×533) + auto quality/format
 - Prevents self-purchase and double-purchase (backend validated)
-- Card layout with images, descriptions, prices, tags
 
 ### 3. Create Listing (`/shop/new-listing`)
 
 - **Image upload** — selects a local file (jpg/png/webp), shows preview
 - On submit, sends `multipart/form-data` to `POST /api/listings`:
-  - Image file → uploaded to Cloudinary server-side
+  - Image file → uploaded to Cloudinary server-side (with AI background removal + eager smart crop)
+  - **Auth0 `user.sub`** automatically sent as `sellerId`
   - Title, description, price (required)
   - Daily rate, comma-separated tags (optional)
 - Cloudinary auto-tags merged with user tags
@@ -181,9 +188,42 @@ All backend communication is centralized in two files:
 | `Navbar` | `navBar.tsx` | — | Top nav with brand, links, sign-in. Adds `scrolled` class on scroll |
 | `CloudinaryImage` | `CloudinaryImage.tsx` | `publicId, alt, width, height, className` | Renders optimized Cloudinary image via `@cloudinary/react` |
 | `UploadPhotoButton` | `uploadPhotoButton.tsx` | `onUploadSuccess, onUploadError, buttonLabel, uploadPreset` | Direct-to-Cloudinary browser upload with XHR progress bar |
-| `ListingsPanel` | `ListingsPanel.tsx` | — | Seller's listing management (fetch, toggle status, delete) |
-| `TransactionsPanel` | `TransactionsPanel.tsx` | — | Purchase history table |
-| `ThriftOutPanel` | `ThriftOutPanel.tsx` | — | Browse live listings, search, purchase |
+| `ListingsPanel` | `ListingsPanel.tsx` | `userId: string` | Seller's listing management — filters by Auth0 userId, Cloudinary-optimized images |
+| `TransactionsPanel` | `TransactionsPanel.tsx` | `userId: string` | Purchase history — shows buyer/seller role pill, Cloudinary thumbnails |
+| `ThriftOutPanel` | `ThriftOutPanel.tsx` | `userId: string` | Browse live listings, Auth0-powered purchase, conditional badges, self-buy prevention |
+
+---
+
+## Utilities
+
+### `utils/cloudinaryUrl.ts` — Cloudinary URL Transformation
+
+Inserts transformation parameters into existing Cloudinary `secure_url` strings. All functions return a new URL string; the original is unchanged.
+
+| Function | Purpose | Cloudinary Params |
+|----------|---------|------------------|
+| `optimizeUrl(url)` | Auto quality + auto format | `q_auto,f_auto` |
+| `smartCropUrl(url, w, h)` | AI-aware crop to exact dimensions | `c_fill,g_auto,w_{w},h_{h},q_auto,f_auto` |
+| `removeBgUrl(url)` | AI background removal | `e_background_removal` |
+| `replaceBgUrl(url, prompt)` | Generative AI background replacement | `e_gen_background_replace:prompt_{text}` |
+| `addBadge(url, text, bgColor?, textColor?)` | Text overlay badge (top-right) | `l_text:Arial_16_bold:{text},co_{color},b_rgb:{bg},...` |
+| `buildDisplayUrl(url, options)` | Combines all transformations | Chains bg → crop → badge |
+| `thumbnailUrl(url, size)` | Square thumbnail for tables | `c_fill,g_auto,w_{size},h_{size},q_auto,f_auto` |
+
+**Usage in components:**
+```typescript
+import { buildDisplayUrl, thumbnailUrl } from "../utils/cloudinaryUrl";
+
+// Card image — smart crop + optimize + optional "NEW" badge
+const cardUrl = buildDisplayUrl(item.cloudinaryUrl, {
+  width: 400,
+  height: 533,
+  badge: isNew ? "NEW" : undefined,
+});
+
+// Table thumbnail — 64×64 square
+const thumbUrl = thumbnailUrl(purchase.cloudinaryUrl, 64);
+```
 
 ---
 
@@ -297,26 +337,33 @@ The app runs at `http://localhost:5173`.
 ### Seller creates a listing
 
 ```
-1. Navigate to /shop → click "Create Listing"
-2. Select image file (jpg/png/webp) → preview shown
-3. Fill in title, description, price, optional daily rate & tags
-4. Click "Create Listing"
-5. Frontend sends multipart/form-data → POST /api/listings
-6. Backend uploads image to Cloudinary → saves to MongoDB
-7. Success message shown, form resets
-8. Listing appears in "My Listings" tab
+1. Sign in via Auth0 at /signin
+2. Navigate to /shop → click "Create Listing"
+3. Select image file (jpg/png/webp) → preview shown
+4. Fill in title, description, price, optional daily rate & tags
+5. Click "Create Listing"
+6. Frontend sends multipart/form-data → POST /api/listings
+   (Auth0 user.sub auto-included as sellerId)
+7. Backend uploads image to Cloudinary (AI bg removal + auto-tagging + eager smart crop)
+8. Saves listing to MongoDB
+9. Success message shown, form resets
+10. Listing appears in "My Listings" tab
 ```
 
 ### Buyer purchases an item
 
 ```
-1. Navigate to /shop → click "Thrift Out" tab
-2. Browse live listings or search by style
-3. Click "Purchase" on desired item
-4. Enter buyer ID → POST /api/listings/:id/purchase
-5. Backend creates UserItemBuy record, marks item "Sold"
-6. Item removed from Thrift Out view
-7. Appears in "Transaction Log" tab
+1. Sign in via Auth0 at /signin
+2. Navigate to /shop → click "Thrift Out" tab
+3. Browse live listings or search by style
+4. Own listings show "Your listing" pill (cannot purchase)
+5. Items created within 24hrs display a "NEW" badge overlay
+6. Click "Purchase" on desired item → confirm dialog
+7. Auth0 user.sub automatically sent as buyerId → POST /api/listings/:id/purchase
+8. Backend validates: item exists, not sold, buyer ≠ seller
+9. Creates UserItemBuy record, marks item "Sold"
+10. Item removed from Thrift Out view
+11. Appears in "Transaction Log" with Buyer/Seller role pill
 ```
 
 ### Style search
@@ -325,6 +372,20 @@ The app runs at `http://localhost:5173`.
 1. In "Thrift Out" tab, type style query (e.g. "minimalist oversized hoodie")
 2. Press Enter or click Search
 3. POST /api/style/search → Backboard vector search → MongoDB fallback
-4. Results displayed as cards with images, prices, tags
+4. Results displayed as cards with optimized Cloudinary images, prices, tags
 5. Click "Clear" to return to all live listings
 ```
+
+---
+
+## Image Optimization
+
+All images served through Cloudinary's CDN with transformations applied via URL params:
+
+| Context | Dimensions | Transformations |
+|---------|-----------|----------------|
+| Card images (Listings, ThriftOut) | 400 × 533 (3:4) | `c_fill,g_auto,q_auto,f_auto` |
+| Table thumbnails (Transactions) | 64 × 64 | `c_fill,g_auto,q_auto,f_auto` |
+| Conditional badge ("NEW") | Same as card | + `l_text:Arial_16_bold:NEW,...` overlay |
+
+Grid cards are capped at `max-width: 320px` with `auto-fill` layout (no stretching on wide screens). All images use `loading="lazy"` for deferred loading below the fold.

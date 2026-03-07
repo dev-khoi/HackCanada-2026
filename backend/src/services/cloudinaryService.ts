@@ -21,6 +21,20 @@ export async function uploadImage(
         resource_type: "image",
         categorization: "imagga_tagging",
         auto_tagging: 0.6,
+        // AI background removal applied at upload time
+        background_removal: "cloudinary_ai",
+        // Eager transformations — pre-generate optimized + smart-cropped variant
+        eager: [
+          {
+            crop: "fill",
+            gravity: "auto",
+            width: 400,
+            height: 533,
+            quality: "auto",
+            fetch_format: "auto",
+          },
+        ],
+        eager_async: true,
       },
       (error, result) => {
         if (error || !result) {

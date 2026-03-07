@@ -427,7 +427,30 @@ function LandingPage() {
 }
 
 export default function App() {
+  const { isAuthenticated, isLoading } = useAuth0();
   const path = window.location.pathname;
+
+  // Protect routes that require authentication
+  const protectedRoutes = ["/shop/new-listing", "/shop"];
+  const isAccessingProtectedRoute = protectedRoutes.some(
+    (route) => path === route,
+  );
+
+  // Show loading while Auth0 is initializing
+  if (isLoading) {
+    return (
+      <main className="auth-page">
+        <section className="auth-card">
+          <h1 className="font-display auth-title">Loading...</h1>
+        </section>
+      </main>
+    );
+  }
+
+  // Redirect unauthenticated users away from protected routes
+  if (!isAuthenticated && isAccessingProtectedRoute) {
+    return <SignInPage />;
+  }
 
   if (path === "/signin") {
     return <SignInPage />;

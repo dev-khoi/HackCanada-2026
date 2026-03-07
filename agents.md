@@ -1,3 +1,4 @@
+NEVER CHANGE THIS: always update the readme in the corresponding folders, or the main folder so that you can reflect what have beenc hagend
 for now you dont need the auth middleware
 
 Below is the same system adapted to Express + TypeScript.

@@ -384,6 +384,35 @@ Returns array of `UserItemSell` documents matching the style query:
 - Returns `{ url, publicId, tags }` — auto-tagging enabled (`auto_tagging: 0.6`)
 - Validates image format (jpg, jpeg, png, webp)
 
+#### Cloudinary AI Features (Upload-Time)
+
+The backend upload pipeline applies these Cloudinary features automatically:
+
+| Feature | Implementation | Notes |
+|---------|---------------|-------|
+| **AI Background Removal** | `background_removal: "cloudinary_ai"` at upload | Requires Cloudinary AI Background Removal add-on |
+| **Auto-Tagging** | `categorization: "imagga_tagging"`, `auto_tagging: 0.6` | Tags with ≥60% confidence are auto-applied |
+| **Eager Smart Crop** | Pre-generates `c_fill,g_auto,w_400,h_533,q_auto,f_auto` variant | Cached at Cloudinary CDN, ready for instant delivery |
+
+#### Cloudinary URL Transformations (Display-Time)
+
+The frontend applies additional transformations via URL manipulation at display time (see `clothesrent/src/utils/cloudinaryUrl.ts`):
+
+| Feature | URL Transformation | Description |
+|---------|-------------------|-------------|
+| **Optimize** | `q_auto,f_auto` | Auto quality compression + format (WebP/AVIF) based on browser support |
+| **Smart Crop** | `c_fill,g_auto,w_400,h_533` | AI gravity detection — keeps subject in frame |
+| **AI Background Removal** | `e_background_removal` | Removes background via URL (requires add-on) |
+| **Generative Background Replace** | `e_gen_background_replace:prompt_{text}` | AI-generates a new background from a text prompt |
+| **Conditional Badging** | `l_text:Arial_16_bold:{text},co_white,b_rgb:{color},g_north_east` | Overlays text badge (e.g. "NEW") in top-right corner |
+
+Example transformed URL:
+```
+Original:  https://res.cloudinary.com/dj3drywnu/image/upload/v123/clothesrent/abc.jpg
+Optimized: https://res.cloudinary.com/dj3drywnu/image/upload/c_fill,g_auto,w_400,h_533,q_auto,f_auto/v123/clothesrent/abc.jpg
+With badge: https://res.cloudinary.com/dj3drywnu/image/upload/c_fill,g_auto,w_400,h_533,q_auto,f_auto/l_text:Arial_16_bold:NEW,co_white,b_rgb:e74c3c,bo_4px_solid_rgb:e74c3c,g_north_east,x_8,y_8/v123/clothesrent/abc.jpg
+```
+
 ### Backboard.io — 🔧 Stub
 
 - `searchByStyle(query)` — returns matching listing IDs (vector similarity)
@@ -396,11 +425,13 @@ Returns array of `UserItemSell` documents matching the style query:
 - Currently returns `{ keywords: [], style: "unknown" }`
 - Add `GEMINI_API_URL` + `GEMINI_API_KEY` to `.env` to activate
 
-### Auth0 — ⏸ Reserved
+### Auth0 — ✅ Integrated via Frontend
 
-- Middleware scaffolded in `middleware/authMiddleware.ts`
-- Not active per current requirements
-- Enable by importing and adding to route middleware chain
+- Backend receives Auth0 `user.sub` as `sellerId` (on listing creation) and `buyerId` (on purchase)
+- The frontend extracts the Auth0 user ID from the `useAuth0()` hook and sends it in API requests
+- Self-purchase prevention: backend compares `sellerId === buyerId` and rejects with 400 error
+- JWT middleware scaffolded in `middleware/authMiddleware.ts` — not active, enable for production
+- Auth0 user IDs follow the format `auth0|abc123` or `google-oauth2|123456`
 
 ---
 
@@ -445,7 +476,7 @@ curl -X POST http://localhost:5000/api/listings \
   -F "dailyRate=28" \
   -F "tags[]=trench" \
   -F "tags[]=outerwear" \
-  -F "sellerId=seller123"
+  -F "sellerId=auth0|abc123"
 ```
 
 ### Get all live listings
@@ -459,7 +490,7 @@ curl http://localhost:5000/api/listings?status=Live
 ```bash
 curl -X POST http://localhost:5000/api/listings/ITEM_ID/purchase \
   -H "Content-Type: application/json" \
-  -d '{"buyerId": "buyer456"}'
+  -d '{"buyerId": "auth0|buyer456"}'
 ```
 
 ### Search by style

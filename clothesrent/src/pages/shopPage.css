@@ -94,7 +94,7 @@
 
 .shop-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(220px, 280px));
   gap: 0.9rem;
 }
 
@@ -298,13 +298,7 @@
   white-space: nowrap;
 }
 
-/* Transaction table images */
-.shop-table-img {
-  width: 48px;
-  height: 48px;
-  object-fit: cover;
-  border: 1px solid rgb(37 31 51 / 10%);
-}
+/* Transaction table images — see consolidated rule below */
 
 .shop-table-id {
   font-size: 0.72rem;
@@ -313,4 +307,52 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Sidebar user info */
+.shop-sidebar-user {
+  font-size: 0.72rem;
+  color: var(--warm-grey);
+  letter-spacing: 0.03em;
+  margin-bottom: 0.9rem;
+  padding-bottom: 0.7rem;
+  border-bottom: 1px solid rgb(37 31 51 / 10%);
+}
+.shop-sidebar-user strong {
+  color: var(--ink);
+}
+
+/* "Your listing" pill in ThriftOut */
+.shop-pill-own {
+  background: rgb(37 31 51 / 8%);
+  color: var(--warm-grey);
+  border-color: rgb(37 31 51 / 18%);
+  font-style: italic;
+}
+
+/* Buyer / Seller role pills in transaction log */
+.shop-pill-buyer {
+  background: rgb(59 130 246 / 14%);
+  color: #1e40af;
+  border-color: rgb(59 130 246 / 35%);
+}
+
+.shop-pill-seller {
+  background: rgb(245 158 11 / 14%);
+  color: #92400e;
+  border-color: rgb(245 158 11 / 35%);
+}
+
+/* Constrain card max-width for very wide screens */
+.shop-card {
+  max-width: 320px;
+}
+
+/* Table thumbnail sizing */
+.shop-table-img {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border: 1px solid rgb(37 31 51 / 10%);
+  border-radius: 2px;
 }

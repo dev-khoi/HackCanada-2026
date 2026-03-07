@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useAuth0 } from "@auth0/auth0-react";
 import ListingsPanel from "../components/ListingsPanel";
 import TransactionsPanel from "../components/TransactionsPanel";
 import ThriftOutPanel from "../components/ThriftOutPanel";
@@ -7,7 +8,10 @@ import "./shopPage.css";
 type ShopView = "listings" | "transactions" | "thriftOut";
 
 export default function ShopPage() {
+  const { user, isAuthenticated } = useAuth0();
   const [activeView, setActiveView] = useState<ShopView>("listings");
+
+  const userId = user?.sub ?? "";
 
   return (
     <main className="shop-page">
@@ -15,6 +19,12 @@ export default function ShopPage() {
         <aside className="shop-sidebar">
           <p className="shop-sidebar-label">Seller Dashboard</p>
           <h1 className="font-display shop-sidebar-title">Shop Control</h1>
+
+          {isAuthenticated && user && (
+            <p className="shop-sidebar-user">
+              Signed in as <strong>{user.nickname ?? user.email}</strong>
+            </p>
+          )}
 
           <button
             type="button"
@@ -45,9 +55,9 @@ export default function ShopPage() {
             </h2>
           </header>
 
-          {activeView === "listings" && <ListingsPanel />}
-          {activeView === "transactions" && <TransactionsPanel />}
-          {activeView === "thriftOut" && <ThriftOutPanel />}
+          {activeView === "listings" && <ListingsPanel userId={userId} />}
+          {activeView === "transactions" && <TransactionsPanel userId={userId} />}
+          {activeView === "thriftOut" && <ThriftOutPanel userId={userId} />}
         </section>
       </div>
     </main>
