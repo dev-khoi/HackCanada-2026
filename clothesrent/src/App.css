@@ -1,12 +1,15 @@
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@200;300;400;500&display=swap');
 
 :root {
-  --cream: #f7f4ef;
-  --parchment: #ede8df;
+  --cream: #f8f5f1;
+  --parchment: #efe9df;
   --charcoal: #1c1c1c;
-  --warm-grey: #9a948a;
+  --warm-grey: #8f8796;
   --mid-grey: #c8c4bc;
-  --accent: #b8a898;
+  --accent: #7dd6c1;
+  --accent-deep: #3a9581;
+  --ink: #251f33;
+  --pop: #ff8fb2;
 }
 
 * {
@@ -16,7 +19,7 @@
 }
 
 body {
-  background: var(--cream);
+  background: radial-gradient(circle at 12% 0%, #fceff4 0%, var(--cream) 33%, #effaf7 100%);
   color: var(--charcoal);
   font-family: 'Jost', sans-serif;
   font-weight: 300;
@@ -107,10 +110,10 @@ body {
 }
 
 .hero {
-  min-height: 100vh;
+  min-height: calc(100vh - 140px);
   display: grid;
   grid-template-columns: 1fr 1fr;
-  padding-top: 68px;
+  padding-top: 2rem;
   position: relative;
   overflow: hidden;
 }
@@ -183,7 +186,7 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 0.75rem;
-  background: var(--charcoal);
+  background: var(--ink);
   color: var(--cream);
   font-family: 'Jost', sans-serif;
   font-size: 0.72rem;
@@ -197,7 +200,7 @@ body {
 }
 
 .btn-primary:hover {
-  background: #2e2e2e;
+  background: #33294a;
   gap: 1.25rem;
 }
 
@@ -214,20 +217,20 @@ body {
   align-items: center;
   justify-content: center;
   background: transparent;
-  color: var(--charcoal);
+  color: var(--ink);
   font-family: 'Jost', sans-serif;
   font-size: 0.72rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   padding: 0.75rem 1.5rem;
-  border: 1px solid var(--charcoal);
+  border: 1px solid var(--ink);
   cursor: pointer;
   transition: background 0.3s, color 0.3s;
   font-weight: 400;
 }
 
 .btn-outline:hover {
-  background: var(--charcoal);
+  background: var(--ink);
   color: var(--cream);
 }
 
@@ -313,16 +316,27 @@ body {
 }
 
 .showcase {
-  padding-top: 5rem;
+  padding-top: 2rem;
   padding-bottom: 5rem;
+}
+
+.showcase-elevated {
+  margin-top: 68px;
+  background: linear-gradient(180deg, rgb(237 232 223 / 40%) 0%, rgb(247 244 239 / 0%) 100%);
 }
 
 .showcase-head {
   padding: 0 4rem;
-  margin-bottom: 2.5rem;
+  margin-bottom: 1.2rem;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
+  gap: 1rem;
+}
+
+.showcase-actions {
+  display: flex;
+  align-items: center;
   gap: 1rem;
 }
 
@@ -341,13 +355,20 @@ body {
   font-style: italic;
 }
 
+.showcase-subtitle {
+  margin-top: 0.55rem;
+  color: var(--warm-grey);
+  font-size: 0.86rem;
+  letter-spacing: 0.03em;
+}
+
 .showcase-link {
   font-size: 0.7rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   text-decoration: none;
-  color: var(--warm-grey);
-  border-bottom: 1px solid var(--mid-grey);
+  color: var(--accent-deep);
+  border-bottom: 1px solid color-mix(in srgb, var(--accent) 55%, white);
   padding-bottom: 2px;
 }
 
@@ -357,6 +378,19 @@ body {
   padding: 1.5rem 0;
 }
 
+.carousel-shell {
+  position: relative;
+}
+
+.carousel-viewport {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.carousel-viewport::-webkit-scrollbar {
+  display: none;
+}
+
 .marquee-pad {
   padding: 1rem 4rem;
 }
@@ -364,22 +398,7 @@ body {
 .marquee-track {
   display: flex;
   gap: 1.5rem;
-  will-change: transform;
-  animation: marquee 40s linear infinite;
-}
-
-.marquee-track:hover {
-  animation-play-state: paused;
-}
-
-@keyframes marquee {
-  0% {
-    transform: translateX(0);
-  }
-
-  100% {
-    transform: translateX(-50%);
-  }
+  width: max-content;
 }
 
 .product-card {
@@ -447,8 +466,8 @@ body {
   position: absolute;
   top: 1rem;
   left: 1rem;
-  background: var(--charcoal);
-  color: var(--cream);
+  background: linear-gradient(120deg, var(--ink) 0%, #473663 100%);
+  color: #fff;
   font-size: 0.58rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -461,6 +480,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
+  gap: 0.8rem;
 }
 
 .card-name {
@@ -478,11 +498,69 @@ body {
   text-transform: uppercase;
 }
 
+.card-availability {
+  font-size: 0.7rem;
+  color: var(--accent-deep);
+  margin-top: 0.45rem;
+}
+
+.card-side-meta {
+  text-align: right;
+}
+
 .card-price {
   font-size: 0.82rem;
   letter-spacing: 0.06em;
   font-weight: 400;
   color: var(--charcoal);
+}
+
+.card-distance {
+  margin-top: 0.35rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  color: var(--warm-grey);
+  text-transform: uppercase;
+}
+
+.map-section {
+  padding: 1rem 4rem 3.5rem;
+}
+
+.map-section-head {
+  margin-bottom: 1.2rem;
+}
+
+.map-eyebrow {
+  margin-bottom: 0.6rem;
+}
+
+.map-title {
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  font-weight: 300;
+  letter-spacing: -0.01em;
+}
+
+.map-title em {
+  color: var(--accent-deep);
+  font-style: italic;
+}
+
+.map-subtitle {
+  margin-top: 0.5rem;
+  font-size: 0.86rem;
+  color: var(--warm-grey);
+}
+
+.map-shell {
+  border: 1px solid rgb(37 31 51 / 12%);
+  overflow: hidden;
+  box-shadow: 0 16px 34px rgb(37 31 51 / 8%);
+}
+
+.leaflet-map {
+  height: 370px;
+  width: 100%;
 }
 
 .divider {
@@ -598,6 +676,38 @@ footer {
   margin-bottom: 0;
 }
 
+.carousel-btn {
+  position: absolute;
+  top: 42%;
+  transform: translateY(-50%);
+  z-index: 4;
+  width: 30px;
+  height: 30px;
+  border: 1px solid rgb(37 31 51 / 24%);
+  background: rgb(255 255 255 / 66%);
+  backdrop-filter: blur(4px);
+  color: var(--ink);
+  font-size: 0.86rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.carousel-btn:hover {
+  background: var(--ink);
+  color: var(--cream);
+  border-color: var(--ink);
+  transform: translateY(-50%) scale(1.04);
+}
+
+.carousel-btn-left {
+  left: 10px;
+}
+
+.carousel-btn-right {
+  right: 10px;
+}
+
 .auth-page {
   min-height: 100vh;
   background: linear-gradient(140deg, var(--cream) 0%, var(--parchment) 100%);
@@ -708,6 +818,7 @@ footer {
 @media (max-width: 900px) {
   .hero {
     grid-template-columns: 1fr;
+    min-height: auto;
   }
 
   .hero-right {
@@ -727,11 +838,29 @@ footer {
   }
 
   .showcase-head,
+  .map-section,
   .marquee-pad,
   .divider,
   footer {
     padding-left: 1.5rem;
     padding-right: 1.5rem;
+  }
+
+  .showcase-elevated {
+    margin-top: 68px;
+  }
+
+  .showcase-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .showcase-head {
+    flex-wrap: wrap;
+  }
+
+  .leaflet-map {
+    height: 320px;
   }
 }
 

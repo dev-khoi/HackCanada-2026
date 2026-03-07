@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useAuth0 } from '@auth0/auth0-react'
+import { CircleMarker, MapContainer, Popup, TileLayer } from 'react-leaflet'
 import './App.css'
 
 type Product = {
@@ -7,20 +8,86 @@ type Product = {
   name: string
   category: string
   price: string
+  distance: string
+  availability: string
   badge: string | null
 }
 
 const NAV_LINKS = ['Home', 'Shop', 'New Arrivals', 'Men', 'Women', 'Contact']
 
 const PRODUCTS: Product[] = [
-  { id: 1, name: 'Obsidian Trench', category: 'Women - Outerwear', price: '$485', badge: 'New' },
-  { id: 2, name: 'Ivory Linen Shirt', category: 'Men - Tops', price: '$210', badge: null },
-  { id: 3, name: 'Slate Wool Blazer', category: 'Men - Tailoring', price: '$620', badge: 'New' },
-  { id: 4, name: 'Cream Slip Dress', category: 'Women - Dresses', price: '$340', badge: null },
-  { id: 5, name: 'Charcoal Wide-Leg', category: 'Men - Trousers', price: '$295', badge: 'New' },
-  { id: 6, name: 'Ecru Knit Set', category: 'Women - Knitwear', price: '$375', badge: null },
-  { id: 7, name: 'Bone Leather Jacket', category: 'Women - Outerwear', price: '$890', badge: 'Limited' },
-  { id: 8, name: 'Ash Cashmere Coat', category: 'Men - Outerwear', price: '$1,150', badge: 'Limited' },
+  {
+    id: 1,
+    name: 'Obsidian Trench',
+    category: 'Women - Outerwear',
+    price: '$485',
+    distance: '1.2 mi',
+    availability: 'Available Today',
+    badge: 'Popular',
+  },
+  {
+    id: 2,
+    name: 'Ivory Linen Shirt',
+    category: 'Men - Tops',
+    price: '$210',
+    distance: '2.4 mi',
+    availability: 'Available Tomorrow',
+    badge: null,
+  },
+  {
+    id: 3,
+    name: 'Slate Wool Blazer',
+    category: 'Men - Tailoring',
+    price: '$620',
+    distance: '0.9 mi',
+    availability: 'Available Today',
+    badge: 'Popular',
+  },
+  {
+    id: 4,
+    name: 'Cream Slip Dress',
+    category: 'Women - Dresses',
+    price: '$340',
+    distance: '1.8 mi',
+    availability: 'Available Today',
+    badge: null,
+  },
+  {
+    id: 5,
+    name: 'Charcoal Wide-Leg',
+    category: 'Men - Trousers',
+    price: '$295',
+    distance: '3.2 mi',
+    availability: 'Available Tomorrow',
+    badge: 'New',
+  },
+  {
+    id: 6,
+    name: 'Ecru Knit Set',
+    category: 'Women - Knitwear',
+    price: '$375',
+    distance: '1.5 mi',
+    availability: 'Available Today',
+    badge: null,
+  },
+  {
+    id: 7,
+    name: 'Bone Leather Jacket',
+    category: 'Women - Outerwear',
+    price: '$890',
+    distance: '2.0 mi',
+    availability: 'Available Today',
+    badge: 'Limited',
+  },
+  {
+    id: 8,
+    name: 'Ash Cashmere Coat',
+    category: 'Men - Outerwear',
+    price: '$1,150',
+    distance: '4.1 mi',
+    availability: 'Weekend Pickup',
+    badge: 'Limited',
+  },
 ]
 
 const FOOTER_LINKS: Record<string, string[]> = {
@@ -28,6 +95,12 @@ const FOOTER_LINKS: Record<string, string[]> = {
   Help: ['Size Guide', 'Shipping', 'Returns', 'Contact Us', 'FAQ'],
   Brand: ['Our Story', 'Sustainability', 'Press', 'Careers', 'Stockists'],
 }
+
+const NEARBY_RENTAL_SPOTS = [
+  { id: 1, name: 'Downtown Wardrobe Hub', lat: 43.6524, lng: -79.3839, eta: '12 min' },
+  { id: 2, name: 'Queen St Rental Closet', lat: 43.6467, lng: -79.3936, eta: '8 min' },
+  { id: 3, name: 'Harbourfront Style Point', lat: 43.6388, lng: -79.3817, eta: '15 min' },
+]
 
 function Navbar() {
   const [scrolled, setScrolled] = useState(false)
@@ -59,57 +132,6 @@ function Navbar() {
   )
 }
 
-function HeroSection() {
-  return (
-    <section className="hero">
-      <div className="hero-left">
-        <div className="hero-eyebrow anim-1">SS 2025 Collection</div>
-
-        <h1 className="hero-title font-display anim-2">
-          Wear the
-          <br />
-          <em>Silence</em>
-          <br />
-          Between
-        </h1>
-
-        <p className="hero-sub anim-3">
-          Elevated wardrobe essentials crafted for those who move through the world with quiet intention. Every
-          piece, a conversation between fabric and form.
-        </p>
-
-        <div className="hero-actions anim-4">
-          <button className="btn-primary">
-            Shop Now
-            <svg width="14" height="10" viewBox="0 0 14 10" fill="none" aria-hidden="true">
-              <path
-                d="M1 5h12M9 1l4 4-4 4"
-                stroke="currentColor"
-                strokeWidth="1.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-          <button className="btn-outline">Explore</button>
-        </div>
-      </div>
-
-      <div className="hero-right">
-        <div className="hero-deco-circle" />
-        <div className="hero-img-frame">
-          <img src="/obcoat.jpg" alt="Model wearing the Obsidian Trench" className="hero-photo" />
-        </div>
-        <div className="featured-pill">
-          <div className="featured-label">Featured</div>
-          <div className="font-display featured-name">Obsidian Trench</div>
-          <div className="featured-price">$485</div>
-        </div>
-      </div>
-    </section>
-  )
-}
-
 function ProductCard({ product }: { product: Product }) {
   return (
     <div className="product-card">
@@ -117,43 +139,142 @@ function ProductCard({ product }: { product: Product }) {
         <div className="card-img-inner">IMAGE</div>
         {product.badge && <span className="card-badge">{product.badge}</span>}
         <div className="card-overlay">
-          <button className="btn-primary quick-add">Quick Add</button>
+          <button className="btn-primary quick-add">Reserve</button>
         </div>
       </div>
       <div className="card-body">
         <div>
           <div className="card-name">{product.name}</div>
           <div className="card-cat">{product.category}</div>
+          <div className="card-availability">{product.availability}</div>
         </div>
-        <div className="card-price">{product.price}</div>
+        <div className="card-side-meta">
+          <div className="card-price">{product.price}</div>
+          <div className="card-distance">{product.distance}</div>
+        </div>
       </div>
     </div>
   )
 }
 
 function ProductShowcase() {
+  const viewportRef = useRef<HTMLDivElement>(null)
+  const [isHovered, setIsHovered] = useState(false)
   const doubled = [...PRODUCTS, ...PRODUCTS]
 
+  useEffect(() => {
+    const viewport = viewportRef.current
+    if (!viewport) return
+
+    let animationFrame = 0
+    const speed = 0.45
+
+    const tick = () => {
+      if (!isHovered) {
+        viewport.scrollLeft += speed
+        const halfWidth = viewport.scrollWidth / 2
+        if (viewport.scrollLeft >= halfWidth) {
+          viewport.scrollLeft -= halfWidth
+        }
+      }
+      animationFrame = window.requestAnimationFrame(tick)
+    }
+
+    animationFrame = window.requestAnimationFrame(tick)
+
+    return () => window.cancelAnimationFrame(animationFrame)
+  }, [isHovered])
+
+  const slideBy = (direction: -1 | 1) => {
+    const viewport = viewportRef.current
+    if (!viewport) return
+
+    const cardStep = 324
+    viewport.scrollBy({ left: direction * cardStep, behavior: 'smooth' })
+  }
+
   return (
-    <section className="showcase">
+    <section
+      className="showcase showcase-elevated"
+    >
       <div className="showcase-head">
         <div>
-          <div className="section-eyebrow showcase-eyebrow">New Arrivals</div>
+          <div className="section-eyebrow showcase-eyebrow">Near You</div>
           <h2 className="font-display showcase-title">
-            The Edit, <em>Spring 2025</em>
+            Rentable Looks <em>Close By</em>
           </h2>
+          <p className="showcase-subtitle">Local picks within a short distance of your current location.</p>
         </div>
-        <a href="#" className="showcase-link">
-          View All
-        </a>
+        <div className="showcase-actions">
+          <a href="#" className="showcase-link">
+            See Nearby
+          </a>
+        </div>
       </div>
 
-      <div className="marquee-wrapper marquee-pad">
-        <div className="marquee-track">
-          {doubled.map((product, index) => (
-            <ProductCard key={`${product.id}-${index}`} product={product} />
-          ))}
+      <div className="carousel-shell">
+        <button
+          type="button"
+          className="carousel-btn carousel-btn-left"
+          aria-label="Scroll left through clothing items"
+          onClick={() => slideBy(-1)}
+        >
+          &#8592;
+        </button>
+        <div
+          className="marquee-wrapper marquee-pad carousel-viewport"
+          ref={viewportRef}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
+          <div className="marquee-track">
+            {doubled.map((product, index) => (
+              <ProductCard key={`${product.id}-${index}`} product={product} />
+            ))}
+          </div>
         </div>
+        <button
+          type="button"
+          className="carousel-btn carousel-btn-right"
+          aria-label="Scroll right through clothing items"
+          onClick={() => slideBy(1)}
+        >
+          &#8594;
+        </button>
+      </div>
+    </section>
+  )
+}
+
+function NearbyMapSection() {
+  return (
+    <section className="map-section">
+      <div className="map-section-head">
+        <div className="section-eyebrow map-eyebrow">Map View</div>
+        <h3 className="font-display map-title">
+          Rentals Around <em>You</em>
+        </h3>
+        <p className="map-subtitle">Frontend-only placeholder map for nearby inventory. Plug in geolocation logic later.</p>
+      </div>
+
+      <div className="map-shell">
+        <MapContainer center={[43.6518, -79.3832]} zoom={13} scrollWheelZoom={false} className="leaflet-map">
+          <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+          {NEARBY_RENTAL_SPOTS.map((spot) => (
+            <CircleMarker
+              key={spot.id}
+              center={[spot.lat, spot.lng]}
+              radius={9}
+              pathOptions={{ color: '#251f33', fillColor: '#7dd6c1', fillOpacity: 0.95, weight: 2 }}
+            >
+              <Popup>
+                <strong>{spot.name}</strong>
+                <br />
+                Pickup ETA: {spot.eta}
+              </Popup>
+            </CircleMarker>
+          ))}
+        </MapContainer>
       </div>
     </section>
   )
@@ -270,9 +391,9 @@ function LandingPage() {
     <>
       <Navbar />
       <main>
-        <HeroSection />
-        <div className="divider" />
         <ProductShowcase />
+        <NearbyMapSection />
+        <div className="divider" />
       </main>
       <Footer />
     </>
