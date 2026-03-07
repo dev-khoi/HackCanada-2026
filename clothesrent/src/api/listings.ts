@@ -67,6 +67,24 @@ export async function searchListings(query: string): Promise<Listing[]> {
   });
 }
 
+export async function analyzeStyleImages(
+  base64Images: string[]
+): Promise<{ descriptions: string[] }> {
+  return apiFetch<{ descriptions: string[] }>("/api/style/analyze", {
+    method: "POST",
+    body: JSON.stringify({ images: base64Images }),
+  });
+}
+
+export async function recommendFromStyle(
+  descriptions: string[]
+): Promise<{ recommendations: Listing[] }> {
+  return apiFetch<{ recommendations: Listing[] }>("/api/style/recommend", {
+    method: "POST",
+    body: JSON.stringify({ descriptions }),
+  });
+}
+
 export async function fetchPurchases(): Promise<Purchase[]> {
   return apiFetch<Purchase[]>("/api/purchases");
 }

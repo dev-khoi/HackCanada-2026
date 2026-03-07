@@ -27,16 +27,16 @@ Gemini API    Cloudinary      Backboard.io
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Runtime | Node.js |
-| Framework | Express.js |
-| Language | TypeScript |
-| Database | MongoDB Atlas (Mongoose ODM) |
-| Image Hosting | Cloudinary (server-side upload) |
-| AI Style Analysis | Google Gemini API |
-| Vector Search | Backboard.io |
-| File Upload | Multer (memory storage) |
+| Layer             | Technology                      |
+| ----------------- | ------------------------------- |
+| Runtime           | Node.js                         |
+| Framework         | Express.js                      |
+| Language          | TypeScript                      |
+| Database          | MongoDB Atlas (Mongoose ODM)    |
+| Image Hosting     | Cloudinary (server-side upload) |
+| AI Style Analysis | Google Gemini API               |
+| Vector Search     | Backboard.io                    |
+| File Upload       | Multer (memory storage)         |
 
 ---
 
@@ -69,8 +69,8 @@ backend/
 │   │   └── styleRoutes.ts         # /api/style
 │   │
 │   ├── services/
-│   │   ├── cloudinaryService.ts   # Server-side image upload
-│   │   ├── geminiService.ts       # AI keyword extraction (stub)
+│   │   ├── cloudinaryService.ts   # Server-side image upload + Gemini AI tagging
+│   │   ├── geminiService.ts       # Google Gemini AI: analyzeStyle + extractImageTags
 │   │   └── backboardService.ts    # Vector search + link gen (stub)
 │   │
 │   ├── types/
@@ -126,8 +126,7 @@ GEMINI_API_URL=https://generativelanguage.googleapis.com/...
 GEMINI_API_KEY=your_gemini_key
 ```
 
-> **Note:** If your MongoDB password contains special characters, URL-encode them.
-> Example: `p@ss!word` → `p%40ss%21word`
+> **Note:** If your MongoDB password contains special characters, URL-encode them. Example: `p@ss!word` → `p%40ss%21word`
 
 ### 3. MongoDB Atlas network access
 
@@ -164,11 +163,18 @@ Phase 1 — Upload Image
         ▼
   POST /api/upload
         │
-        ├── Upload image to Cloudinary → get cloudinaryUrl + publicId + auto-tags
+        ├── Upload image to Cloudinary → get cloudinaryUrl + publicId
+        │
+        ├── Analyze image with Google Gemini AI:
+        │   Extract 5-8 fashion-relevant tags (item type, color, style, material)
+        │
+        ├── Merge Gemini tags with Cloudinary auto-tags (if any)
         │
         ▼
-  Return { url, publicId, tags }
-
+  Return { url, publicId, tags: [...] }
+        │
+        │  (Frontend stores tags for next phase)
+        ▼
 Phase 2 — Enhance & Publish
   Seller previews AI transformations (live Cloudinary URL preview)
         │  Toggle: Remove BG, Replace BG, Smart Crop, Badge
@@ -239,25 +245,25 @@ Base URL: `http://localhost:5000`
 
 ### Health Check
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/health` | Returns `{ "status": "ok" }` |
+| Method | Endpoint      | Description                  |
+| ------ | ------------- | ---------------------------- |
+| GET    | `/api/health` | Returns `{ "status": "ok" }` |
 
 ---
 
 ### Upload — `/api/upload`
 
 | Method | Endpoint | Body | Description |
-|--------|----------|------|-------------|
+| --- | --- | --- | --- |
 | POST | `/api/upload` | `multipart/form-data` | Upload image to Cloudinary (returns URL + publicId + auto-tags) |
 
 #### POST `/api/upload` — Upload Image Only
 
 Send as **multipart/form-data**:
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `image` | File | ✅ | Image file (jpg, png, webp) |
+| Field   | Type | Required | Description                 |
+| ------- | ---- | -------- | --------------------------- |
+| `image` | File | ✅       | Image file (jpg, png, webp) |
 
 #### Response — Upload Success
 
@@ -265,16 +271,23 @@ Send as **multipart/form-data**:
 {
   "url": "https://res.cloudinary.com/dj3drywnu/image/upload/v123/clothesrent/abc123.jpg",
   "publicId": "clothesrent/abc123",
-  "tags": ["clothing", "outerwear", "fashion"]
+  "tags": ["blazer", "navy", "wool", "minimalist", "tailored", "menswear"]
 }
 ```
+
+**Tags** are automatically extracted by Google Gemini AI during upload:
+
+- Analyzes the garment in the image
+- Returns 5-8 relevant fashion tags (item type, color, style, material, aesthetic)
+- Includes both Gemini tags + any Cloudinary auto-tags
+- Gracefully degrades if Gemini is unavailable (upload still succeeds with Cloudinary-only tags)
 
 ---
 
 ### Listings — `/api/listings`
 
 | Method | Endpoint | Body / Query | Description |
-|--------|----------|-------------|-------------|
+| --- | --- | --- | --- |
 | GET | `/api/listings` | `?status=Live` (optional) | Get all listings, newest first |
 | GET | `/api/listings/:id` | — | Get single listing by ID |
 | POST | `/api/listings` | `multipart/form-data` | Create listing (upload image) |
@@ -287,7 +300,7 @@ Send as **multipart/form-data**:
 **Mode 1: Pre-uploaded image (recommended)** — Send as JSON:
 
 | Field | Type | Required | Description |
-|-------|------|----------|-------------|
+| --- | --- | --- | --- |
 | `cloudinaryUrl` | string | ✅ | Pre-uploaded Cloudinary URL (from `POST /api/upload`) |
 | `publicId` | string | ✅ | Cloudinary public ID |
 | `autoTags` | string[] | No | Auto-tags from upload response |
@@ -300,6 +313,7 @@ Send as **multipart/form-data**:
 | `transformations` | object | No | Cloudinary AI transform preferences |
 
 **`transformations` object:**
+
 ```json
 {
   "removeBg": false,
@@ -312,15 +326,15 @@ Send as **multipart/form-data**:
 
 **Mode 2: File upload (legacy)** — Send as `multipart/form-data`:
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `image` | File | ✅ | Image file (jpg, png, webp) |
-| `title` | string | ✅ | Item title |
-| `description` | string | ✅ | Item description |
-| `price` | number | ✅ | Listing price |
-| `dailyRate` | number | No | Daily rental rate |
-| `tags[]` | string[] | No | User-supplied tags |
-| `sellerId` | string | No | Seller identifier |
+| Field         | Type     | Required | Description                 |
+| ------------- | -------- | -------- | --------------------------- |
+| `image`       | File     | ✅       | Image file (jpg, png, webp) |
+| `title`       | string   | ✅       | Item title                  |
+| `description` | string   | ✅       | Item description            |
+| `price`       | number   | ✅       | Listing price               |
+| `dailyRate`   | number   | No       | Daily rental rate           |
+| `tags[]`      | string[] | No       | User-supplied tags          |
+| `sellerId`    | string   | No       | Seller identifier           |
 
 #### Response — Seller Upload Success
 
@@ -373,7 +387,7 @@ Send as **multipart/form-data**:
 ### Style — `/api/style`
 
 | Method | Endpoint | Body | Description |
-|--------|----------|------|-------------|
+| --- | --- | --- | --- |
 | POST | `/api/style/analyze` | `{ "images": ["url1", "url2"] }` | Analyze images with Gemini AI |
 | POST | `/api/style/search` | `{ "query": "minimalist hoodie" }` | Search listings by style |
 
@@ -403,7 +417,7 @@ Returns array of `UserItemSell` documents matching the style query:
 ### `useritemsells` (UserItemSell)
 
 | Field | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
+| --- | --- | --- | --- | --- |
 | `sellerId` | String | No | `""` | Auth0 ID or user identifier |
 | `title` | String | ✅ | — | Item title |
 | `description` | String | ✅ | — | Item description |
@@ -421,7 +435,7 @@ Returns array of `UserItemSell` documents matching the style query:
 **`transformations` subdocument:**
 
 | Field | Type | Default | Description |
-|-------|------|---------|-------------|
+| --- | --- | --- | --- |
 | `removeBg` | Boolean | `false` | AI background removal enabled |
 | `replaceBg` | String \| null | `null` | AI background replacement prompt |
 | `smartCrop` | Boolean | `true` | AI-aware smart crop |
@@ -430,26 +444,26 @@ Returns array of `UserItemSell` documents matching the style query:
 
 ### `useritembys` (UserItemBuy)
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `itemId` | String | ✅ | Reference to UserItemSell `_id` |
-| `buyerId` | String | ✅ | Auth0 ID or user identifier |
-| `sellerId` | String | No | Copied from the listing |
-| `purchaseDate` | Date | Auto | Date of purchase |
-| `cloudinaryUrl` | String | ✅ | Item image URL |
-| `title` | String | ✅ | Item title |
-| `price` | Number | ✅ | Purchase price |
-| `tags` | String[] | No | Copied from listing |
+| Field           | Type     | Required | Description                     |
+| --------------- | -------- | -------- | ------------------------------- |
+| `itemId`        | String   | ✅       | Reference to UserItemSell `_id` |
+| `buyerId`       | String   | ✅       | Auth0 ID or user identifier     |
+| `sellerId`      | String   | No       | Copied from the listing         |
+| `purchaseDate`  | Date     | Auto     | Date of purchase                |
+| `cloudinaryUrl` | String   | ✅       | Item image URL                  |
+| `title`         | String   | ✅       | Item title                      |
+| `price`         | Number   | ✅       | Purchase price                  |
+| `tags`          | String[] | No       | Copied from listing             |
 
 ### `users` (User)
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `auth0Id` | String | ✅ | Unique Auth0 identifier |
-| `email` | String | No | User email |
-| `username` | String | No | Display name |
-| `backboardProfileRef` | String | No | Backboard profile ID |
-| `styleProfileJSON` | Object | No | Stored style preferences |
+| Field                 | Type   | Required | Description              |
+| --------------------- | ------ | -------- | ------------------------ |
+| `auth0Id`             | String | ✅       | Unique Auth0 identifier  |
+| `email`               | String | No       | User email               |
+| `username`            | String | No       | Display name             |
+| `backboardProfileRef` | String | No       | Backboard profile ID     |
+| `styleProfileJSON`    | Object | No       | Stored style preferences |
 
 ---
 
@@ -468,7 +482,7 @@ Returns array of `UserItemSell` documents matching the style query:
 The seller upload flow uses a **two-phase architecture** where the image is uploaded first, then the seller previews and selects AI transformations before publishing:
 
 | Phase | Feature | Implementation | Notes |
-|-------|---------|---------------|-------|
+| --- | --- | --- | --- |
 | Upload | **Auto-Tagging** | `categorization: "imagga_tagging"`, `auto_tagging: 0.6` | Tags with ≥60% confidence are auto-applied |
 | Preview | **AI Background Removal** | Live URL preview: `e_background_removal` | Requires Cloudinary AI Background Removal add-on |
 | Preview | **AI Background Replace** | Live URL preview: `e_gen_background_replace:prompt_{text}` | Requires AI Generative add-on |
@@ -483,7 +497,7 @@ Transformation preferences are stored in the `transformations` subdocument and a
 The frontend applies additional transformations via URL manipulation at display time (see `clothesrent/src/utils/cloudinaryUrl.ts`):
 
 | Feature | URL Transformation | Description |
-|---------|-------------------|-------------|
+| --- | --- | --- |
 | **Optimize** | `q_auto,f_auto` | Auto quality compression + format (WebP/AVIF) based on browser support |
 | **Smart Crop** | `c_fill,g_auto,w_400,h_533` | AI gravity detection — keeps subject in frame |
 | **AI Background Removal** | `e_background_removal` | Removes background via URL (requires add-on) |
@@ -491,6 +505,7 @@ The frontend applies additional transformations via URL manipulation at display 
 | **Conditional Badging** | `l_text:Arial_16_bold:{text},co_white,b_rgb:{color},g_north_east` | Overlays text badge (e.g. "NEW") in top-right corner |
 
 Example transformed URL:
+
 ```
 Original:  https://res.cloudinary.com/dj3drywnu/image/upload/v123/clothesrent/abc.jpg
 Optimized: https://res.cloudinary.com/dj3drywnu/image/upload/c_fill,g_auto,w_400,h_533,q_auto,f_auto/v123/clothesrent/abc.jpg
@@ -522,7 +537,7 @@ With badge: https://res.cloudinary.com/dj3drywnu/image/upload/c_fill,g_auto,w_40
 ## Validation & Edge Cases
 
 | Validation | Endpoint | Behavior |
-|------------|----------|----------|
+| --- | --- | --- |
 | Missing title/description/price | `POST /api/listings` | 400 error |
 | Missing image file | `POST /api/listings` | 400 error |
 | Invalid image format | `POST /api/listings` | 500 with descriptive message |
@@ -598,12 +613,15 @@ curl http://localhost:5000/api/health
 The frontend (`clothesrent/`) at `http://localhost:5173` connects to this backend at `http://localhost:5000`. CORS is enabled.
 
 **Seller upload page** (`/shop/new-listing`):
+
 - Currently uploads directly to Cloudinary from the browser
 - To use the backend flow instead: submit the form as `multipart/form-data` to `POST /api/listings` with the image file
 
 **Shop page** (`/shop`):
+
 - Fetch listings via `GET /api/listings?status=Live`
 - Purchase via `POST /api/listings/:id/purchase`
 
 **Style search**:
+
 - `POST /api/style/search` with `{ query: "..." }`

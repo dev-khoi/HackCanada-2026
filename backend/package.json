@@ -9,6 +9,8 @@
     "start": "node dist/server.js"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "backboard-sdk": "^1.5.3",
     "cloudinary": "^2.9.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",

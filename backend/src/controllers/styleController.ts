@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { analyzeStyle } from "../services/geminiService";
-import { searchByStyle } from "../services/backboardService";
+import { searchByStyle, recommendListings } from "../services/backboardService";
 import UserItemSell from "../models/UserItemSell";
 
 export const analyzeStyleFromImages = async (req: Request, res: Response) => {
@@ -11,9 +11,62 @@ export const analyzeStyleFromImages = async (req: Request, res: Response) => {
       return;
     }
     const result = await analyzeStyle(images);
-    res.json(result);
-  } catch (error) {
+    res.json(result); // { descriptions: string[] }
+  } catch (error: any) {
+    console.error("Style analysis error:", error?.message || error);
     res.status(500).json({ error: "Style analysis failed" });
+  }
+};
+
+/**
+ * POST /api/style/recommend
+ * Body: { descriptions: string[] }
+ * Fetches all live listings, sends them + descriptions to Backboard,
+ * returns the best matching listings.
+ */
+export const recommendFromDescriptions = async (req: Request, res: Response) => {
+  try {
+    const { descriptions } = req.body as { descriptions: string[] };
+    if (!descriptions || !descriptions.length) {
+      res.status(400).json({ error: "descriptions array is required" });
+      return;
+    }
+
+    // Fetch all live listings from MongoDB
+    const allListings = await UserItemSell.find({ status: "Live" }).lean();
+
+    const catalog = allListings.map((l: any) => ({
+      _id: l._id.toString(),
+      title: l.title,
+      description: l.description,
+      tags: l.tags || [],
+    }));
+
+    if (catalog.length === 0) {
+      res.json({ recommendations: [] });
+      return;
+    }
+
+    // Ask Backboard (or fallback) to pick the best matches
+    const matchedIds = await recommendListings(descriptions, catalog);
+
+    // Fetch the full listing documents for the matched IDs
+    const recommendations = await UserItemSell.find({
+      _id: { $in: matchedIds },
+    }).lean();
+
+    // Preserve the ranked order from Backboard
+    const idOrder = new Map(matchedIds.map((id, i) => [id, i]));
+    recommendations.sort(
+      (a: any, b: any) =>
+        (idOrder.get(a._id.toString()) ?? 99) -
+        (idOrder.get(b._id.toString()) ?? 99)
+    );
+
+    res.json({ recommendations });
+  } catch (error: any) {
+    console.error("Recommend error:", error?.message || error);
+    res.status(500).json({ error: "Recommendation failed" });
   }
 };
 
@@ -28,7 +81,6 @@ export const searchListingsByStyle = async (req: Request, res: Response) => {
     const listingIds = await searchByStyle(query);
 
     if (listingIds.length === 0) {
-      // Fallback: text search on description / title / tags
       const listings = await UserItemSell.find({
         status: "Live",
         $or: [

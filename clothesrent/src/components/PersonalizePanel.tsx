@@ -4,6 +4,8 @@ import {
   saveUserProfile,
   type UserProfileData,
 } from "../utils/profileStorage";
+import { analyzeStyleImages, recommendFromStyle } from "../api/listings";
+import type { Listing } from "../types/listing";
 
 interface Props {
   userId: string;
@@ -26,15 +28,13 @@ const STYLE_SUGGESTIONS = [
   "Avant-Garde",
 ];
 
-function inferStyleFromFilenames(files: File[]): string {
-  const text = files.map((file) => file.name.toLowerCase()).join(" ");
-  if (text.includes("black") || text.includes("dark") || text.includes("punk")) {
-    return "Goth";
-  }
-  if (text.includes("retro") || text.includes("vintage")) return "Vintage";
-  if (text.includes("hoodie") || text.includes("sneaker")) return "Streetwear";
-  if (text.includes("clean") || text.includes("neutral")) return "Minimalist";
-  return STYLE_SUGGESTIONS[files.length % STYLE_SUGGESTIONS.length];
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
 
 export default function PersonalizePanel({
@@ -49,6 +49,9 @@ export default function PersonalizePanel({
   const [manualStyle, setManualStyle] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
   const [previewItems, setPreviewItems] = useState<PreviewItem[]>([]);
+  const [descriptions, setDescriptions] = useState<string[]>([]);
+  const [recommendations, setRecommendations] = useState<Listing[]>([]);
+  const [isRecommending, setIsRecommending] = useState(false);
 
   const canAnalyze = files.length > 0 && !isAnalyzing;
   const canSave = !!(detectedStyle || manualStyle.trim());
@@ -75,6 +78,8 @@ export default function PersonalizePanel({
     setFiles(limited);
     setDetectedStyle("");
     setManualStyle("");
+    setDescriptions([]);
+    setRecommendations([]);
     setStatusMessage(
       selected.length > 10
         ? "Only the first 10 images were selected."
@@ -85,15 +90,38 @@ export default function PersonalizePanel({
   const handleAnalyze = async () => {
     if (!canAnalyze) return;
     setIsAnalyzing(true);
-    setStatusMessage("Analyzing your style with AI (stub)...");
+    setStatusMessage("Analyzing your clothing with Gemini AI...");
+    setDescriptions([]);
 
-    // Placeholder: will be replaced with Gemini request.
-    await new Promise((resolve) => setTimeout(resolve, 900));
-    const nextStyle = inferStyleFromFilenames(files);
-    setDetectedStyle(nextStyle);
-    setManualStyle(nextStyle);
-    setIsAnalyzing(false);
-    setStatusMessage(`AI returned: ${nextStyle}`);
+    try {
+      const base64Images = await Promise.all(files.map(fileToBase64));
+      const result = await analyzeStyleImages(base64Images);
+      setDescriptions(result.descriptions);
+      const styleSummary = result.descriptions.length > 0
+        ? result.descriptions[0]
+        : "No style detected";
+      setDetectedStyle(styleSummary);
+      setManualStyle(styleSummary);
+      setStatusMessage(`AI returned ${result.descriptions.length} description(s). Finding matching listings...`);
+
+      // Auto-fetch recommendations from Backboard
+      setIsRecommending(true);
+      try {
+        const recResult = await recommendFromStyle(result.descriptions);
+        setRecommendations(recResult.recommendations);
+        setStatusMessage(
+          `AI returned ${result.descriptions.length} description(s). Found ${recResult.recommendations.length} matching listing(s).`
+        );
+      } catch {
+        setStatusMessage(`Descriptions ready. Recommendation service unavailable.`);
+      } finally {
+        setIsRecommending(false);
+      }
+    } catch (error: any) {
+      setStatusMessage(`Analysis failed: ${error?.message || "Unknown error"}`);
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const handleSaveStyle = () => {
@@ -115,8 +143,7 @@ export default function PersonalizePanel({
   return (
     <div className="personalize-panel">
       <p className="shop-section-subtitle">
-        Upload up to 10 images. AI analysis is stubbed for now and will be connected to
-        Gemini later.
+        Upload up to 10 images. Gemini AI will describe each clothing item.
       </p>
 
       <section className="personalize-uploader">
@@ -145,10 +172,13 @@ export default function PersonalizePanel({
 
       {previewItems.length > 0 && (
         <div className="personalize-thumb-grid">
-          {previewItems.map((item) => (
+          {previewItems.map((item, index) => (
             <article key={item.key} className="personalize-thumb-card">
               <img src={item.url} alt={item.name} className="personalize-thumb-img" />
               <p className="personalize-thumb-name">{item.name}</p>
+              {descriptions[index] && (
+                <p className="personalize-thumb-desc">{descriptions[index]}</p>
+              )}
             </article>
           ))}
         </div>
@@ -173,6 +203,17 @@ export default function PersonalizePanel({
           {isAnalyzing ? "Analyzing..." : "Analyze Style"}
         </button>
       </div>
+
+      {descriptions.length > 0 && (
+        <div className="personalize-descriptions">
+          <p className="personalize-result-line"><strong>AI Descriptions:</strong></p>
+          <ul>
+            {descriptions.map((desc, i) => (
+              <li key={i}>{desc}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {(detectedStyle || manualStyle) && (
         <div className="personalize-result-card">
@@ -202,6 +243,32 @@ export default function PersonalizePanel({
       )}
 
       {statusMessage && <p className="shop-section-subtitle">{statusMessage}</p>}
+
+      {isRecommending && (
+        <p className="shop-section-subtitle">Finding matching listings...</p>
+      )}
+
+      {recommendations.length > 0 && (
+        <div className="personalize-recommendations">
+          <p className="personalize-result-line">
+            <strong>Recommended Listings ({recommendations.length}):</strong>
+          </p>
+          <div className="personalize-thumb-grid">
+            {recommendations.map((listing) => (
+              <article key={listing._id} className="personalize-thumb-card">
+                <img
+                  src={listing.cloudinaryUrl}
+                  alt={listing.title}
+                  className="personalize-thumb-img"
+                />
+                <p className="personalize-thumb-name">{listing.title}</p>
+                <p className="personalize-thumb-desc">${listing.price}</p>
+                <p className="personalize-thumb-desc">{listing.description}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

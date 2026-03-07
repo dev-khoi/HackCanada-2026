@@ -38,6 +38,7 @@ const UserItemSellSchema = new Schema<IUserItemSell>(
         badgeColor: "e74c3c",
       }),
     },
+    
   },
   { timestamps: true }
 );

@@ -166,6 +166,7 @@ export default function SellerUploadPosting() {
         publicId,
         autoTags,
         transformations: transforms,
+        
       });
 
       setSubmitMessage(
