@@ -1,32 +1,19 @@
-import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import {
-  loadUserProfile,
-  saveUserProfile,
-  type UserProfileData,
-} from "../utils/profileStorage";
-import { analyzeStyleImages, recommendFromStyle } from "../api/listings";
+  analyzeStyleImages,
+  recommendFromStyle,
+  recommendFromPrompt,
+  getUserStyle,
+  saveUserStyle,
+} from "../api/listings";
 import type { Listing } from "../types/listing";
+import { buildDisplayUrl } from "../utils/cloudinaryUrl";
 
 interface Props {
   userId: string;
   fallbackName: string;
   fallbackPicture: string;
 }
-
-interface PreviewItem {
-  key: string;
-  name: string;
-  url: string;
-}
-
-const STYLE_SUGGESTIONS = [
-  "Goth",
-  "Streetwear",
-  "Minimalist",
-  "Vintage",
-  "Athleisure",
-  "Avant-Garde",
-];
 
 function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -37,122 +24,143 @@ function fileToBase64(file: File): Promise<string> {
   });
 }
 
-export default function PersonalizePanel({
-  userId,
-  fallbackName,
-  fallbackPicture,
-}: Props) {
+export default function PersonalizePanel({ userId }: Props) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [files, setFiles] = useState<File[]>([]);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [detectedStyle, setDetectedStyle] = useState("");
-  const [manualStyle, setManualStyle] = useState("");
+  const [prompt, setPrompt] = useState("");
+  const [savedPrompt, setSavedPrompt] = useState("");
+  const [loading, setLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
-  const [previewItems, setPreviewItems] = useState<PreviewItem[]>([]);
-  const [descriptions, setDescriptions] = useState<string[]>([]);
   const [recommendations, setRecommendations] = useState<Listing[]>([]);
-  const [isRecommending, setIsRecommending] = useState(false);
 
-  const canAnalyze = files.length > 0 && !isAnalyzing;
-  const canSave = !!(detectedStyle || manualStyle.trim());
-  const styleToSave = (manualStyle.trim() || detectedStyle).trim();
-
-  const fileNames = useMemo(() => files.map((file) => file.name), [files]);
-
+  // Load saved style from DB on mount
   useEffect(() => {
-    const previews = files.map((file) => ({
-      key: `${file.name}-${file.lastModified}-${file.size}`,
-      name: file.name,
-      url: URL.createObjectURL(file),
-    }));
-    setPreviewItems(previews);
+    if (!userId) return;
+    getUserStyle(userId).then((data) => {
+      if (data.prompt) {
+        setPrompt(data.prompt);
+        setSavedPrompt(data.prompt);
+      }
+      // Auto-load recommendations from saved prompt
+      if (data.prompt || (data.descriptions && data.descriptions.length > 0)) {
+        setLoading(true);
+        const fetchRecs =
+          data.descriptions && data.descriptions.length > 0
+            ? recommendFromStyle(data.descriptions)
+            : recommendFromPrompt(data.prompt);
+        fetchRecs
+          .then((r) => {
+            setRecommendations(r.recommendations);
+            setStatusMessage(`${r.recommendations.length} personalized listing(s) for you.`);
+          })
+          .catch(() => setStatusMessage("Could not load recommendations."))
+          .finally(() => setLoading(false));
+      }
+    }).catch(() => {});
+  }, [userId]);
 
-    return () => {
-      previews.forEach((preview) => URL.revokeObjectURL(preview.url));
-    };
-  }, [files]);
-
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const selected = Array.from(event.target.files ?? []);
-    const limited = selected.slice(0, 10);
-    setFiles(limited);
-    setDetectedStyle("");
-    setManualStyle("");
-    setDescriptions([]);
-    setRecommendations([]);
-    setStatusMessage(
-      selected.length > 10
-        ? "Only the first 10 images were selected."
-        : `${limited.length} image(s) selected.`,
-    );
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const selected = Array.from(e.target.files ?? []);
+    setFiles(selected.slice(0, 10));
+    setStatusMessage(`${Math.min(selected.length, 10)} image(s) selected.`);
   };
 
-  const handleAnalyze = async () => {
-    if (!canAnalyze) return;
-    setIsAnalyzing(true);
-    setStatusMessage("Analyzing your clothing with Gemini AI...");
-    setDescriptions([]);
+  const handleImageSearch = async () => {
+    if (files.length === 0) return;
+    setLoading(true);
+    setStatusMessage("Analyzing images & finding matches...");
+    setRecommendations([]);
 
     try {
       const base64Images = await Promise.all(files.map(fileToBase64));
-      const result = await analyzeStyleImages(base64Images);
-      setDescriptions(result.descriptions);
-      const styleSummary = result.descriptions.length > 0
-        ? result.descriptions[0]
-        : "No style detected";
-      setDetectedStyle(styleSummary);
-      setManualStyle(styleSummary);
-      setStatusMessage(`AI returned ${result.descriptions.length} description(s). Finding matching listings...`);
+      const analysis = await analyzeStyleImages(base64Images);
+      const result = await recommendFromStyle(analysis.descriptions);
+      setRecommendations(result.recommendations);
+      setStatusMessage(`Found ${result.recommendations.length} matching listing(s).`);
 
-      // Auto-fetch recommendations from Backboard
-      setIsRecommending(true);
-      try {
-        const recResult = await recommendFromStyle(result.descriptions);
-        setRecommendations(recResult.recommendations);
-        setStatusMessage(
-          `AI returned ${result.descriptions.length} description(s). Found ${recResult.recommendations.length} matching listing(s).`
-        );
-      } catch {
-        setStatusMessage(`Descriptions ready. Recommendation service unavailable.`);
-      } finally {
-        setIsRecommending(false);
+      if (userId) {
+        saveUserStyle(userId, { descriptions: analysis.descriptions }).catch(() => {});
       }
     } catch (error: any) {
-      setStatusMessage(`Analysis failed: ${error?.message || "Unknown error"}`);
+      setStatusMessage(`Failed: ${error?.message || "Unknown error"}`);
     } finally {
-      setIsAnalyzing(false);
+      setLoading(false);
     }
   };
 
-  const handleSaveStyle = () => {
-    if (!styleToSave) return;
+  const handlePromptSearch = async () => {
+    const q = prompt.trim();
+    if (!q) return;
+    setLoading(true);
+    setStatusMessage("Finding matches...");
+    setRecommendations([]);
 
-    const fallback: UserProfileData = {
-      name: fallbackName,
-      style: "",
-      picture: fallbackPicture,
-      location: "",
-    };
-    const existingProfile = loadUserProfile(userId, fallback);
-    saveUserProfile(userId, {
-      ...existingProfile,
-      style: styleToSave,
-    });
-    setStatusMessage(`Saved style: ${styleToSave}`);
+    try {
+      const result = await recommendFromPrompt(q);
+      setRecommendations(result.recommendations);
+      setStatusMessage(`Found ${result.recommendations.length} matching listing(s).`);
+    } catch (error: any) {
+      setStatusMessage(`Failed: ${error?.message || "Unknown error"}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSavePrompt = async () => {
+    const q = prompt.trim();
+    if (!q || !userId) return;
+    try {
+      await saveUserStyle(userId, { prompt: q });
+      setSavedPrompt(q);
+      setStatusMessage("Style preference saved to your profile!");
+    } catch {
+      setStatusMessage("Failed to save preference.");
+    }
   };
 
   return (
     <div className="personalize-panel">
       <p className="shop-section-subtitle">
-        Upload up to 10 images. Gemini AI will describe each clothing item.
+        Get personalized listings based on your style. Use a text prompt or upload inspiration images.
       </p>
 
+      {/* Text prompt section */}
+      <div className="personalize-prompt-section">
+        <textarea
+          className="modal-textarea"
+          placeholder="Describe your style... (e.g. minimalist oversized hoodie, dark academia)"
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          rows={2}
+        />
+        {savedPrompt && savedPrompt !== prompt.trim() && (
+          <p className="modal-saved-hint">Saved: <em>{savedPrompt}</em></p>
+        )}
+        <div className="personalize-actions">
+          <button
+            type="button"
+            className="btn-primary shop-action-btn"
+            onClick={handlePromptSearch}
+            disabled={loading || !prompt.trim()}>
+            {loading ? "Searching..." : "Find Matches"}
+          </button>
+          {userId && (
+            <button
+              type="button"
+              className="btn-outline shop-action-btn"
+              onClick={handleSavePrompt}
+              disabled={!prompt.trim()}>
+              Save Preference
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Image upload section */}
       <section className="personalize-uploader">
         <div>
-          <p className="personalize-uploader-title">Inspiration Upload</p>
-          <p className="personalize-uploader-meta">
-            JPG, PNG, WEBP · up to 10 photos
-          </p>
+          <p className="personalize-uploader-title">Or Upload Inspiration</p>
+          <p className="personalize-uploader-meta">JPG, PNG, WEBP · up to 10 photos</p>
         </div>
         <button
           type="button"
@@ -162,7 +170,6 @@ export default function PersonalizePanel({
         </button>
         <input
           ref={fileInputRef}
-          id="personalize-images"
           type="file"
           accept="image/*"
           multiple
@@ -171,102 +178,73 @@ export default function PersonalizePanel({
         />
       </section>
 
-      {previewItems.length > 0 && (
-        <div className="personalize-thumb-grid">
-          {previewItems.map((item, index) => (
-            <article key={item.key} className="personalize-thumb-card">
-              <img src={item.url} alt={item.name} className="personalize-thumb-img" />
-              <p className="personalize-thumb-name">{item.name}</p>
-              {descriptions[index] && (
-                <p className="personalize-thumb-desc">{descriptions[index]}</p>
-              )}
-            </article>
-          ))}
-        </div>
-      )}
-
-      {fileNames.length > 0 && (
-        <div className="personalize-file-list">
-          {fileNames.map((name) => (
-            <span key={name} className="shop-tag">
-              {name}
-            </span>
-          ))}
-        </div>
-      )}
-
-      <div className="personalize-actions">
-        <button
-          type="button"
-          className="btn-primary shop-action-btn"
-          onClick={handleAnalyze}
-          disabled={!canAnalyze}>
-          {isAnalyzing ? "Analyzing..." : "Analyze Style"}
-        </button>
-      </div>
-
-      {descriptions.length > 0 && (
-        <div className="personalize-descriptions">
-          <p className="personalize-result-line"><strong>AI Descriptions:</strong></p>
-          <ul>
-            {descriptions.map((desc, i) => (
-              <li key={i}>{desc}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {(detectedStyle || manualStyle) && (
-        <div className="personalize-result-card">
-          <p className="personalize-result-line">
-            AI Style: <strong>{detectedStyle || "No result yet"}</strong>
-          </p>
-
-          <label className="personalize-label" htmlFor="manual-style">
-            Change Manually
-          </label>
-          <input
-            id="manual-style"
-            className="personalize-input"
-            value={manualStyle}
-            onChange={(event) => setManualStyle(event.target.value)}
-            placeholder="e.g. Goth"
-          />
-
+      {files.length > 0 && (
+        <div className="personalize-actions">
+          <span className="modal-file-count">{files.length} image(s) selected</span>
           <button
             type="button"
-            className="btn-outline shop-action-btn"
-            onClick={handleSaveStyle}
-            disabled={!canSave}>
-            Save Style to Profile
+            className="btn-primary shop-action-btn"
+            onClick={handleImageSearch}
+            disabled={loading}>
+            {loading ? "Analyzing..." : "Analyze & Recommend"}
           </button>
         </div>
       )}
 
       {statusMessage && <p className="shop-section-subtitle">{statusMessage}</p>}
 
-      {isRecommending && (
-        <p className="shop-section-subtitle">Finding matching listings...</p>
-      )}
+      {loading && <p className="shop-section-subtitle">Loading recommendations...</p>}
 
       {recommendations.length > 0 && (
         <div className="personalize-recommendations">
           <p className="personalize-result-line">
-            <strong>Recommended Listings ({recommendations.length}):</strong>
+            <strong>Recommended For You ({recommendations.length}):</strong>
           </p>
-          <div className="personalize-thumb-grid">
-            {recommendations.map((listing) => (
-              <article key={listing._id} className="personalize-thumb-card">
-                <img
-                  src={listing.cloudinaryUrl}
-                  alt={listing.title}
-                  className="personalize-thumb-img"
-                />
-                <p className="personalize-thumb-name">{listing.title}</p>
-                <p className="personalize-thumb-desc">${listing.price}</p>
-                <p className="personalize-thumb-desc">{listing.description}</p>
-              </article>
-            ))}
+          <div className="shop-grid">
+            {recommendations.map((listing) => {
+              const t = listing.transformations;
+              const badge = t?.badge || undefined;
+              const displayUrl = listing.cloudinaryUrl
+                ? buildDisplayUrl(listing.cloudinaryUrl, {
+                    width: 400,
+                    height: 533,
+                    removeBg: t?.removeBg,
+                    replaceBg: t?.replaceBg ?? undefined,
+                    badge,
+                    badgeColor: t?.badgeColor,
+                  })
+                : "";
+
+              return (
+                <article key={listing._id} className="shop-card">
+                  {displayUrl && (
+                    <div className="shop-card-img-wrap">
+                      <img
+                        src={displayUrl}
+                        alt={listing.title}
+                        className="shop-card-img"
+                        loading="lazy"
+                      />
+                    </div>
+                  )}
+                  <h3 className="shop-card-title">{listing.title}</h3>
+                  <p className="shop-card-meta">{listing.description}</p>
+                  <p className="shop-card-rate">
+                    ${listing.price}
+                    {listing.dailyRate > 0 && (
+                      <span className="shop-card-daily"> · ${listing.dailyRate}/day</span>
+                    )}
+                  </p>
+                  {listing.tags.length > 0 && (
+                    <div className="shop-card-tags">
+                      {listing.tags.slice(0, 5).map((tag) => (
+                        <span key={tag} className="shop-tag">{tag}</span>
+                      ))}
+                    </div>
+                  )}
+                </article>
+              );
+            })}
           </div>
         </div>
       )}

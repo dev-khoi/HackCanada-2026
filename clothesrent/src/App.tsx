@@ -11,91 +11,9 @@ import {
   type UserProfileData,
 } from "./utils/profileStorage";
 import { geocodeAddressToCoords } from "./utils/location";
-
-type Product = {
-  id: number;
-  name: string;
-  category: string;
-  price: string;
-  distance: string;
-  availability: string;
-  badge: string | null;
-};
-
-const PRODUCTS: Product[] = [
-  {
-    id: 1,
-    name: "Obsidian Trench",
-    category: "Women - Outerwear",
-    price: "$485",
-    distance: "1.2 mi",
-    availability: "Available Today",
-    badge: "Popular",
-  },
-  {
-    id: 2,
-    name: "Ivory Linen Shirt",
-    category: "Men - Tops",
-    price: "$210",
-    distance: "2.4 mi",
-    availability: "Available Tomorrow",
-    badge: null,
-  },
-  {
-    id: 3,
-    name: "Slate Wool Blazer",
-    category: "Men - Tailoring",
-    price: "$620",
-    distance: "0.9 mi",
-    availability: "Available Today",
-    badge: "Popular",
-  },
-  {
-    id: 4,
-    name: "Cream Slip Dress",
-    category: "Women - Dresses",
-    price: "$340",
-    distance: "1.8 mi",
-    availability: "Available Today",
-    badge: null,
-  },
-  {
-    id: 5,
-    name: "Charcoal Wide-Leg",
-    category: "Men - Trousers",
-    price: "$295",
-    distance: "3.2 mi",
-    availability: "Available Tomorrow",
-    badge: "New",
-  },
-  {
-    id: 6,
-    name: "Ecru Knit Set",
-    category: "Women - Knitwear",
-    price: "$375",
-    distance: "1.5 mi",
-    availability: "Available Today",
-    badge: null,
-  },
-  {
-    id: 7,
-    name: "Bone Leather Jacket",
-    category: "Women - Outerwear",
-    price: "$890",
-    distance: "2.0 mi",
-    availability: "Available Today",
-    badge: "Limited",
-  },
-  {
-    id: 8,
-    name: "Ash Cashmere Coat",
-    category: "Men - Outerwear",
-    price: "$1,150",
-    distance: "4.1 mi",
-    availability: "Weekend Pickup",
-    badge: "Limited",
-  },
-];
+import { fetchListings } from "./api/listings";
+import type { Listing } from "./types/listing";
+import { buildDisplayUrl } from "./utils/cloudinaryUrl";
 
 const FOOTER_LINKS: Record<string, string[]> = {
   Navigate: ["Home", "Shop", "Profile", "Sign In"],
@@ -137,39 +55,79 @@ function MapRecenter({ center }: { center: [number, number] }) {
   return null;
 }
 
-function ProductCard({ product }: { product: Product }) {
+function ListingCard({ listing }: { listing: Listing }) {
+  const t = listing.transformations;
+  const badge = t?.badge || undefined;
+  const displayUrl = listing.cloudinaryUrl
+    ? buildDisplayUrl(listing.cloudinaryUrl, {
+        width: 400,
+        height: 533,
+        removeBg: t?.removeBg,
+        replaceBg: t?.replaceBg ?? undefined,
+        badge,
+        badgeColor: t?.badgeColor,
+      })
+    : "";
+
   return (
     <div className="product-card">
       <div className="card-img-wrap">
-        <div className="card-img-inner">IMAGE</div>
-        {product.badge && <span className="card-badge">{product.badge}</span>}
+        {displayUrl ? (
+          <img src={displayUrl} alt={listing.title} className="card-img-inner" loading="lazy" />
+        ) : (
+          <div className="card-img-inner">IMAGE</div>
+        )}
+        {badge && <span className="card-badge">{badge}</span>}
         <div className="card-overlay">
-          <button className="btn-primary quick-add">Reserve</button>
+          <a href="/shop" className="btn-primary quick-add">View</a>
         </div>
       </div>
       <div className="card-body">
         <div>
-          <div className="card-name">{product.name}</div>
-          <div className="card-cat">{product.category}</div>
-          <div className="card-availability">{product.availability}</div>
+          <div className="card-name">{listing.title}</div>
+          <div className="card-cat">{listing.tags.slice(0, 2).join(" · ") || "Fashion"}</div>
+          <div className="card-availability">
+            {listing.status === "Live" ? "Available" : listing.status}
+          </div>
         </div>
         <div className="card-side-meta">
-          <div className="card-price">{product.price}</div>
-          <div className="card-distance">{product.distance}</div>
+          <div className="card-price">${listing.price}</div>
+          {listing.dailyRate > 0 && (
+            <div className="card-distance">${listing.dailyRate}/day</div>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-function ProductShowcase() {
+function ProductShowcase({
+  recommendations,
+  onClearRecommendations,
+}: {
+  recommendations: Listing[];
+  onClearRecommendations: () => void;
+}) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
-  const doubled = [...PRODUCTS, ...PRODUCTS];
+  const [dbListings, setDbListings] = useState<Listing[]>([]);
+
+  useEffect(() => {
+    fetchListings("Live")
+      .then((data) => setDbListings(data))
+      .catch(() => {});
+  }, []);
+
+  const hasRecommendations = recommendations.length > 0;
+  const displayListings = hasRecommendations ? recommendations : dbListings;
+  const doubled =
+    displayListings.length > 0
+      ? [...displayListings, ...displayListings]
+      : [];
 
   useEffect(() => {
     const viewport = viewportRef.current;
-    if (!viewport) return;
+    if (!viewport || doubled.length === 0) return;
 
     let animationFrame = 0;
     const speed = 0.45;
@@ -202,21 +160,43 @@ function ProductShowcase() {
     <section className="showcase showcase-elevated">
       <div className="showcase-head">
         <div>
-          <div className="section-eyebrow showcase-eyebrow">Near You</div>
+          <div className="section-eyebrow showcase-eyebrow">
+            {hasRecommendations ? "Your Style" : "Near You"}
+          </div>
           <h2 className="font-display showcase-title">
-            Rentable Looks <em>Close By</em>
+            {hasRecommendations ? (
+              <>Matched <em>For You</em></>
+            ) : (
+              <>Rentable Looks <em>Close By</em></>
+            )}
           </h2>
           <p className="showcase-subtitle">
-            Local picks within a short distance of your current location.
+            {hasRecommendations
+              ? `${recommendations.length} listing(s) matching your style preference.`
+              : "Local picks within a short distance of your current location."}
           </p>
         </div>
         <div className="showcase-actions">
-          <a href="#" className="showcase-link">
-            See Nearby
-          </a>
+          {hasRecommendations ? (
+            <button
+              type="button"
+              className="btn-outline showcase-link"
+              onClick={onClearRecommendations}>
+              Show All
+            </button>
+          ) : (
+            <a href="/shop" className="showcase-link">
+              Browse Shop
+            </a>
+          )}
         </div>
       </div>
 
+      {doubled.length === 0 ? (
+        <p className="showcase-subtitle" style={{ textAlign: "center", padding: "2rem 0" }}>
+          No listings yet. Be the first to post!
+        </p>
+      ) : (
       <div className="carousel-shell">
         <button
           type="button"
@@ -231,8 +211,8 @@ function ProductShowcase() {
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}>
           <div className="marquee-track">
-            {doubled.map((product, index) => (
-              <ProductCard key={`${product.id}-${index}`} product={product} />
+            {doubled.map((listing, index) => (
+              <ListingCard key={`${listing._id}-${index}`} listing={listing} />
             ))}
           </div>
         </div>
@@ -244,6 +224,7 @@ function ProductShowcase() {
           &#8594;
         </button>
       </div>
+      )}
     </section>
   );
 }
@@ -524,11 +505,20 @@ function SignInPage() {
   );
 }
 
-function LandingPage() {
+function LandingPage({
+  recommendations,
+  onClearRecommendations,
+}: {
+  recommendations: Listing[];
+  onClearRecommendations: () => void;
+}) {
   return (
     <>
       <main>
-        <ProductShowcase />
+        <ProductShowcase
+          recommendations={recommendations}
+          onClearRecommendations={onClearRecommendations}
+        />
         <NearbyMapSection />
         <div className="divider" />
       </main>
@@ -537,7 +527,13 @@ function LandingPage() {
   );
 }
 
-export default function App() {
+export default function App({
+  recommendations = [],
+  onClearRecommendations = () => {},
+}: {
+  recommendations?: Listing[];
+  onClearRecommendations?: () => void;
+}) {
   const { isAuthenticated, isLoading } = useAuth0();
   const path = window.location.pathname;
 
@@ -579,5 +575,5 @@ export default function App() {
     return <ProfilePage />;
   }
 
-  return <LandingPage />;
+  return <LandingPage recommendations={recommendations} onClearRecommendations={onClearRecommendations} />;
 }

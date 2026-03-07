@@ -85,6 +85,33 @@ export async function recommendFromStyle(
   });
 }
 
+export async function recommendFromPrompt(
+  prompt: string
+): Promise<{ recommendations: Listing[] }> {
+  return apiFetch<{ recommendations: Listing[] }>("/api/style/recommend", {
+    method: "POST",
+    body: JSON.stringify({ prompt }),
+  });
+}
+
+export async function getUserStyle(
+  auth0Id: string
+): Promise<{ prompt: string; descriptions: string[] }> {
+  return apiFetch<{ prompt: string; descriptions: string[] }>(
+    `/api/users/${encodeURIComponent(auth0Id)}/style`
+  );
+}
+
+export async function saveUserStyle(
+  auth0Id: string,
+  data: { prompt?: string; descriptions?: string[] }
+): Promise<{ prompt: string; descriptions: string[] }> {
+  return apiFetch<{ prompt: string; descriptions: string[] }>(
+    `/api/users/${encodeURIComponent(auth0Id)}/style`,
+    { method: "PUT", body: JSON.stringify(data) }
+  );
+}
+
 export async function fetchPurchases(): Promise<Purchase[]> {
   return apiFetch<Purchase[]>("/api/purchases");
 }

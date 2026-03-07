@@ -10,7 +10,7 @@ type ShopView = "listings" | "transactions" | "thriftOut" | "personalize";
 
 export default function ShopPage() {
   const { user, isAuthenticated } = useAuth0();
-  const [activeView, setActiveView] = useState<ShopView>("listings");
+  const [activeView, setActiveView] = useState<ShopView>("thriftOut");
 
   const userId = user?.sub ?? "";
 
@@ -26,7 +26,12 @@ export default function ShopPage() {
               Signed in as <strong>{user.nickname ?? user.email}</strong>
             </p>
           )}
-
+          <button
+            type="button"
+            className={`shop-nav-btn${activeView === "thriftOut" ? " active" : ""}`}
+            onClick={() => setActiveView("thriftOut")}>
+            Thrift Out
+          </button>
           <button
             type="button"
             className={`shop-nav-btn${activeView === "listings" ? " active" : ""}`}
@@ -39,12 +44,7 @@ export default function ShopPage() {
             onClick={() => setActiveView("transactions")}>
             Transaction Log
           </button>
-          <button
-            type="button"
-            className={`shop-nav-btn${activeView === "thriftOut" ? " active" : ""}`}
-            onClick={() => setActiveView("thriftOut")}>
-            Thrift Out
-          </button>
+
           <button
             type="button"
             className={`shop-nav-btn${activeView === "personalize" ? " active" : ""}`}
@@ -64,7 +64,9 @@ export default function ShopPage() {
           </header>
 
           {activeView === "listings" && <ListingsPanel userId={userId} />}
-          {activeView === "transactions" && <TransactionsPanel userId={userId} />}
+          {activeView === "transactions" && (
+            <TransactionsPanel userId={userId} />
+          )}
           {activeView === "thriftOut" && <ThriftOutPanel userId={userId} />}
           {activeView === "personalize" && (
             <PersonalizePanel

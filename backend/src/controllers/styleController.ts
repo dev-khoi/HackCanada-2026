@@ -20,15 +20,26 @@ export const analyzeStyleFromImages = async (req: Request, res: Response) => {
 
 /**
  * POST /api/style/recommend
- * Body: { descriptions: string[] }
- * Fetches all live listings, sends them + descriptions to Backboard,
+ * Body: { descriptions?: string[], prompt?: string }
+ * Accepts either an array of Gemini descriptions or a raw text prompt.
+ * Fetches all live listings, sends them + input to Backboard,
  * returns the best matching listings.
  */
 export const recommendFromDescriptions = async (req: Request, res: Response) => {
   try {
-    const { descriptions } = req.body as { descriptions: string[] };
-    if (!descriptions || !descriptions.length) {
-      res.status(400).json({ error: "descriptions array is required" });
+    const { descriptions, prompt } = req.body as {
+      descriptions?: string[];
+      prompt?: string;
+    };
+
+    // Accept either descriptions array or a text prompt
+    let descArray: string[];
+    if (descriptions && descriptions.length > 0) {
+      descArray = descriptions;
+    } else if (prompt && prompt.trim()) {
+      descArray = [prompt.trim()];
+    } else {
+      res.status(400).json({ error: "descriptions array or prompt string is required" });
       return;
     }
 
@@ -48,7 +59,7 @@ export const recommendFromDescriptions = async (req: Request, res: Response) => 
     }
 
     // Ask Backboard (or fallback) to pick the best matches
-    const matchedIds = await recommendListings(descriptions, catalog);
+    const matchedIds = await recommendListings(descArray, catalog);
 
     // Fetch the full listing documents for the matched IDs
     const recommendations = await UserItemSell.find({

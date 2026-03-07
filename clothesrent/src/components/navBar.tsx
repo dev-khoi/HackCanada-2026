@@ -1,11 +1,18 @@
-import { useState, useEffect, type FormEvent } from "react";
+import { useState, useEffect } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
+import StyleSearchModal from "./StyleSearchModal";
+import type { Listing } from "../types/listing";
 
 const NAV_LINKS = ["Home", "Shop"];
-export default function Navbar() {
-  const { isAuthenticated, logout } = useAuth0();
+
+export default function Navbar({
+  onRecommendations,
+}: {
+  onRecommendations?: (listings: Listing[]) => void;
+}) {
+  const { isAuthenticated, logout, user } = useAuth0();
   const [scrolled, setScrolled] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 30);
@@ -13,68 +20,61 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const handleSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const query = searchQuery.trim();
-    if (!query) return;
-
-    const url = new URL(window.location.href);
-    url.pathname = "/shop";
-    url.searchParams.set("q", query);
-    window.history.pushState({}, "", `${url.pathname}?${url.searchParams.toString()}`);
-
-    // Placeholder integration point for future global search wiring.
-    window.dispatchEvent(new CustomEvent("navbar-search", { detail: query }));
+  const handleRecommendations = (listings: Listing[]) => {
+    onRecommendations?.(listings);
+    setModalOpen(false);
   };
 
   return (
-    <nav className={`navbar${scrolled ? " scrolled" : ""}`}>
-      <a href="/" className="brand">
-        MAISON ORE
-      </a>
-
-      <div className="nav-links">
-        {NAV_LINKS.map((link) => (
-          <a
-            key={link}
-            href={link === "Home" ? "/" : link === "Shop" ? "/shop" : "#"}
-            className="nav-link">
-            {link}
-          </a>
-        ))}
-      </div>
-
-      <form className="nav-search" onSubmit={handleSearchSubmit}>
-        <input
-          type="search"
-          className="nav-search-input"
-          placeholder="Search styles (coming soon)"
-          value={searchQuery}
-          onChange={(event) => setSearchQuery(event.target.value)}
-          aria-label="Search listings"
-        />
-        <button type="submit" className="btn-outline nav-search-btn">
-          Search
-        </button>
-      </form>
-
-      <div className="nav-auth-actions">
-        <a href={isAuthenticated ? "/profile" : "/signin"} className="btn-outline nav-signin nav-signin-link">
-          {isAuthenticated ? "Profile" : "Sign In"}
+    <>
+      <nav className={`navbar${scrolled ? " scrolled" : ""}`}>
+        <a href="/" className="brand">
+          MAISON ORE
         </a>
-        {isAuthenticated && (
-          <button
-            type="button"
-            className="btn-outline nav-signin"
-            onClick={() =>
-              logout({
-                logoutParams: { returnTo: `${window.location.origin}/signin` },
-              })
-            }>
-            Sign Out
-          </button>
-        )}
-      </div>
-    </nav>
+
+        <div className="nav-links">
+          {NAV_LINKS.map((link) => (
+            <a
+              key={link}
+              href={link === "Home" ? "/" : link === "Shop" ? "/shop" : "#"}
+              className="nav-link">
+              {link}
+            </a>
+          ))}
+        </div>
+
+        <button
+          type="button"
+          className="nav-style-btn"
+          onClick={() => setModalOpen(true)}>
+          &#9733; Style Search
+        </button>
+
+        <div className="nav-auth-actions">
+          <a href={isAuthenticated ? "/profile" : "/signin"} className="btn-outline nav-signin nav-signin-link">
+            {isAuthenticated ? "Profile" : "Sign In"}
+          </a>
+          {isAuthenticated && (
+            <button
+              type="button"
+              className="btn-outline nav-signin"
+              onClick={() =>
+                logout({
+                  logoutParams: { returnTo: `${window.location.origin}/signin` },
+                })
+              }>
+              Sign Out
+            </button>
+          )}
+        </div>
+      </nav>
+
+      <StyleSearchModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        auth0Id={user?.sub ?? ""}
+        onRecommendations={handleRecommendations}
+      />
+    </>
   );
 }

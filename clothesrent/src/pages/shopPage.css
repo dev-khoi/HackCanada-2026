@@ -504,6 +504,17 @@
 
 .personalize-actions {
   margin-top: 0.2rem;
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.personalize-prompt-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
 }
 
 .personalize-result-card {
