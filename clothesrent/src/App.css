@@ -2436,6 +2436,16 @@ footer {
   margin-top: 0.15rem;
 }
 
+.ldp-seller-link {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.ldp-seller-link:hover {
+  color: var(--warm-grey);
+}
+
 .ldp-loading,
 .ldp-error {
   text-align: center;

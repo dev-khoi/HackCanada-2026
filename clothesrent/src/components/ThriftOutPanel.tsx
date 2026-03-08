@@ -307,8 +307,18 @@ export default function ThriftOutPanel({ userId }: Props) {
             })
             : "";
 
+          const sellerDisplayName = item.sellerName?.trim() || "Anonymous";
+          const sellerProfileHref = item.sellerId?.trim()
+            ? `/profile/${encodeURIComponent(item.sellerId.trim())}`
+            : "";
+
           return (
-            <a key={item._id} href={`/listing/${item._id}`} className="shop-card shop-card-link">
+            <article key={item._id} className="shop-card shop-card-link shop-card-clickable">
+              <a
+                href={`/listing/${item._id}`}
+                className="shop-card-stretch-link"
+                aria-label={`View listing: ${item.title}`}
+              />
               {displayUrl && (
                 <div className="shop-card-img-wrap">
                   <img
@@ -324,6 +334,16 @@ export default function ThriftOutPanel({ userId }: Props) {
               {item.location && (
                 <p className="shop-card-meta shop-card-location">Location: {item.location}</p>
               )}
+              <p className="shop-card-meta shop-card-location">
+                Listed by:{" "}
+                {sellerProfileHref ? (
+                  <a className="shop-card-user-link" href={sellerProfileHref}>
+                    {sellerDisplayName}
+                  </a>
+                ) : (
+                  sellerDisplayName
+                )}
+              </p>
               {itemDistance != null && (
                 <p className="shop-card-meta shop-card-location">
                   Distance: {itemDistance.toFixed(1)} km
@@ -353,7 +373,7 @@ export default function ThriftOutPanel({ userId }: Props) {
                   ))}
                 </div>
               )}
-            </a>
+            </article>
           );
         })}
       </div>

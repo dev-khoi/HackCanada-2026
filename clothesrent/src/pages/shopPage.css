@@ -119,6 +119,22 @@
   box-shadow: 0 8px 24px rgb(37 31 51 / 12%);
 }
 
+.shop-card-clickable {
+  position: relative;
+}
+
+.shop-card-stretch-link {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: 16px;
+}
+
+.shop-card-clickable>*:not(.shop-card-stretch-link) {
+  position: relative;
+  z-index: 2;
+}
+
 .shop-card-top {
   display: flex;
   justify-content: space-between;
@@ -157,6 +173,8 @@
   color: var(--ink);
   text-decoration: underline;
   text-underline-offset: 2px;
+  position: relative;
+  z-index: 3;
 }
 
 .shop-card-user-link:hover {

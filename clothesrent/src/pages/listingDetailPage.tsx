@@ -94,6 +94,11 @@ export default function ListingDetailPage() {
             badgeColor: listing.transformations?.badgeColor,
         })
         : "";
+    const sellerDisplayName =
+        listing.sellerName?.trim() || listing.sellerId?.trim() || "Anonymous";
+    const sellerProfileHref = listing.sellerId?.trim()
+        ? `/profile/${encodeURIComponent(listing.sellerId.trim())}`
+        : "";
 
     return (
         <main className="ldp-page">
@@ -263,7 +268,13 @@ export default function ListingDetailPage() {
                     <div className="ldp-seller">
                         <div className="ldp-seller-label">Listed by</div>
                         <div className="ldp-seller-id">
-                            {listing.sellerId?.slice(0, 20) || "Anonymous"}
+                            {sellerProfileHref ? (
+                                <a className="ldp-seller-link" href={sellerProfileHref}>
+                                    {sellerDisplayName}
+                                </a>
+                            ) : (
+                                sellerDisplayName
+                            )}
                         </div>
                     </div>
                 </div>
