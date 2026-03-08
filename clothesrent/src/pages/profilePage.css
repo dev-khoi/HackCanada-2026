@@ -5,8 +5,16 @@
   justify-content: center;
 }
 
+/* Two-column layout: profile card left, listings right */
+.profile-layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 480px) 1fr;
+  gap: 2rem;
+  width: min(1200px, 100%);
+  align-items: start;
+}
+
 .profile-card {
-  width: min(560px, 100%);
   background: rgb(247 244 239 / 90%);
   border: 1px solid rgb(28 28 28 / 10%);
   box-shadow: 0 24px 50px rgb(28 28 28 / 9%);
@@ -131,4 +139,146 @@
   background: rgb(255 255 255 / 65%);
   color: var(--ink);
   font-size: 0.92rem;
+}
+
+/* ── Listings Panel ── */
+.profile-listings-panel {
+  background: rgb(247 244 239 / 90%);
+  border: 1px solid rgb(28 28 28 / 10%);
+  box-shadow: 0 24px 50px rgb(28 28 28 / 9%);
+  padding: 1.75rem;
+}
+
+.profile-listings-title {
+  font-size: 1.3rem;
+  font-weight: 400;
+  color: #251f33;
+  margin: 0 0 1rem;
+  letter-spacing: 0.02em;
+}
+
+.profile-listings-empty {
+  color: #8a7f96;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.profile-listings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.profile-listing-card {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid rgb(28 28 28 / 8%);
+  border-radius: 14px;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.profile-listing-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgb(28 28 28 / 10%);
+}
+
+.profile-listing-img-wrap {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba(237, 232, 223, 0.25), rgba(249, 248, 245, 0.6));
+}
+
+.profile-listing-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-listing-img-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #8a7f96;
+  background: rgb(28 28 28 / 4%);
+}
+
+.profile-listing-info {
+  padding: 0.65rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.profile-listing-name {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #251f33;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-listing-price {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #251f33;
+}
+
+.profile-listing-status {
+  font-size: 0.62rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #8a7f96;
+}
+
+.profile-listing-status--live {
+  color: #4caf50;
+}
+
+.profile-listing-status--draft {
+  color: #ff9800;
+}
+
+.profile-listing-status--sold {
+  color: #9e9e9e;
+}
+
+.profile-new-listing-btn {
+  display: inline-block;
+  margin-top: 1.2rem;
+  padding: 0.7rem 1.2rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  text-decoration: none;
+  color: #f9f8f5;
+  background: #251f33;
+  border-radius: 12px;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.profile-new-listing-btn:hover {
+  background: #3a3050;
+  transform: translateY(-1px);
+}
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .profile-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-listings-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
 }

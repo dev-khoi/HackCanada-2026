@@ -95,6 +95,58 @@ async function fetchPhotonSuggestions(query: string): Promise<string[]> {
     .filter(Boolean);
 }
 
+// ── Geocode helpers & cache ──
+
+const MAX_GEOCODE_CACHE = 200;
+const geocodeCache = new Map<string, { lat: number; lng: number } | null>();
+
+async function geocodeWithPhoton(
+  query: string,
+): Promise<{ lat: number; lng: number } | null> {
+  try {
+    const res = await fetch(
+      `https://photon.komoot.io/api/?limit=1&q=${encodeURIComponent(query)}`,
+      {
+        headers: {
+          "User-Agent": "clothesrent-location-proxy/1.0",
+          Accept: "application/json",
+        },
+      },
+    );
+    if (!res.ok) return null;
+    const data = (await res.json()) as {
+      features?: Array<{ geometry?: { coordinates?: number[] } }>;
+    };
+    const coords = data.features?.[0]?.geometry?.coordinates;
+    if (!coords || coords.length < 2) return null;
+    return { lat: coords[1], lng: coords[0] };
+  } catch {
+    return null;
+  }
+}
+
+async function geocodeWithNominatim(
+  query: string,
+): Promise<{ lat: number; lng: number } | null> {
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(query)}`,
+      {
+        headers: {
+          "User-Agent": "clothesrent-location-proxy/1.0",
+          Accept: "application/json",
+        },
+      },
+    );
+    if (!res.ok) return null;
+    const data = (await res.json()) as Array<{ lat: string; lon: string }>;
+    if (!data.length) return null;
+    return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+  } catch {
+    return null;
+  }
+}
+
 const router = Router();
 
 router.get("/suggest", async (req: Request, res: Response) => {

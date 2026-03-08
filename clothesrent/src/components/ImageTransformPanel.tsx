@@ -15,9 +15,7 @@ export default function ImageTransformPanel({
   const [transforms, setTransforms] = useState<ImageTransformations>({
     ...DEFAULT_TRANSFORMATIONS,
   });
-  const [isOriginalLoading, setIsOriginalLoading] = useState(true);
   const [isEnhancedLoading, setIsEnhancedLoading] = useState(true);
-  const originalImageRef = useRef<HTMLImageElement>(null);
   const enhancedImageRef = useRef<HTMLImageElement>(null);
 
   const update = (partial: Partial<ImageTransformations>) => {
@@ -35,15 +33,6 @@ export default function ImageTransformPanel({
     badgeColor: transforms.badgeColor,
   });
 
-  const originalUrl = buildDisplayUrl(cloudinaryUrl, {
-    width: 400,
-    height: 533,
-  });
-
-  useEffect(() => {
-    setIsOriginalLoading(!(originalImageRef.current?.complete ?? false));
-  }, [originalUrl]);
-
   useEffect(() => {
     setIsEnhancedLoading(!(enhancedImageRef.current?.complete ?? false));
   }, [previewUrl]);
@@ -55,32 +44,10 @@ export default function ImageTransformPanel({
         Apply Cloudinary AI features to make your listing stand out.
       </p>
 
-      {/* Before / After Preview */}
-      <div className="transform-preview-row">
-        <div className="transform-preview-col">
-          <span className="transform-preview-label">Original</span>
-          <div className="transform-preview-box">
-            <img
-              ref={originalImageRef}
-              src={originalUrl}
-              alt="Original"
-              className={`transform-preview-img${isOriginalLoading ? " transform-preview-img--loading" : ""}`}
-              onLoad={() => setIsOriginalLoading(false)}
-              onError={() => setIsOriginalLoading(false)}
-            />
-            {isOriginalLoading && (
-              <div
-                className="image-loading-overlay"
-                role="status"
-                aria-live="polite">
-                <span className="image-loading-spinner" aria-hidden="true" />
-                <span className="image-loading-text">Loading image...</span>
-              </div>
-            )}
-          </div>
-        </div>
-        <div className="transform-preview-col">
-          <span className="transform-preview-label">Enhanced</span>
+      {/* Two-column: Enhanced preview LEFT, Controls RIGHT */}
+      <div className="transform-layout">
+        <div className="transform-enhanced-preview">
+          <span className="transform-preview-label">Enhanced Preview</span>
           <div className="transform-preview-box transform-preview-box--active">
             <img
               ref={enhancedImageRef}
@@ -101,128 +68,128 @@ export default function ImageTransformPanel({
             )}
           </div>
         </div>
-      </div>
 
-      {/* Controls */}
-      <div className="transform-controls">
-        {/* Background Removal */}
-        <label className="transform-toggle-row">
-          <span className="transform-toggle-label">
-            AI Background Removal
-            <span className="transform-toggle-hint">
-              Removes the background and keeps the garment
-            </span>
-          </span>
-          <input
-            type="checkbox"
-            className="transform-checkbox"
-            checked={transforms.removeBg}
-            disabled={!!transforms.replaceBg}
-            onChange={(e) => update({ removeBg: e.target.checked })}
-          />
-        </label>
-
-        {/* Background Replace */}
-        <div className="transform-control-group">
+        {/* Controls */}
+        <div className="transform-controls">
+          {/* Background Removal */}
           <label className="transform-toggle-row">
             <span className="transform-toggle-label">
-              AI Background Replace
+              AI Background Removal
               <span className="transform-toggle-hint">
-                Replace the background with an AI-generated scene
+                Removes the background and keeps the garment
               </span>
             </span>
             <input
               type="checkbox"
               className="transform-checkbox"
-              checked={!!transforms.replaceBg}
-              onChange={(e) =>
-                update({
-                  replaceBg: e.target.checked
-                    ? "clean white studio background"
-                    : null,
-                  removeBg: false,
-                })
-              }
+              checked={transforms.removeBg}
+              disabled={!!transforms.replaceBg}
+              onChange={(e) => update({ removeBg: e.target.checked })}
             />
           </label>
-          {transforms.replaceBg !== null && (
-            <input
-              type="text"
-              className="transform-prompt-input"
-              placeholder="e.g. minimalist studio, urban street, marble floor..."
-              value={transforms.replaceBg}
-              onChange={(e) => update({ replaceBg: e.target.value })}
-            />
-          )}
-        </div>
 
-        {/* Smart Crop */}
-        <label className="transform-toggle-row">
-          <span className="transform-toggle-label">
-            Smart Crop
-            <span className="transform-toggle-hint">
-              Auto-detects the garment and crops around it
-            </span>
-          </span>
-          <input
-            type="checkbox"
-            className="transform-checkbox"
-            checked={transforms.smartCrop}
-            onChange={(e) => update({ smartCrop: e.target.checked })}
-          />
-        </label>
-
-        {/* Conditional Badge */}
-        <div className="transform-control-group">
-          <label className="transform-toggle-row">
-            <span className="transform-toggle-label">
-              Badge Overlay
-              <span className="transform-toggle-hint">
-                Add a text badge in the top-right corner
+          {/* Background Replace */}
+          <div className="transform-control-group">
+            <label className="transform-toggle-row">
+              <span className="transform-toggle-label">
+                AI Background Replace
+                <span className="transform-toggle-hint">
+                  Replace the background with an AI-generated scene
+                </span>
               </span>
-            </span>
-            <input
-              type="checkbox"
-              className="transform-checkbox"
-              checked={!!transforms.badge}
-              onChange={(e) =>
-                update({ badge: e.target.checked ? "NEW" : null })
-              }
-            />
-          </label>
-          {transforms.badge !== null && (
-            <div className="transform-badge-row">
               <input
-                type="text"
-                className="transform-prompt-input transform-badge-text"
-                placeholder="NEW"
-                maxLength={12}
-                value={transforms.badge}
+                type="checkbox"
+                className="transform-checkbox"
+                checked={!!transforms.replaceBg}
                 onChange={(e) =>
-                  update({ badge: e.target.value.toUpperCase() })
+                  update({
+                    replaceBg: e.target.checked
+                      ? "clean white studio background"
+                      : null,
+                    removeBg: false,
+                  })
                 }
               />
-              <label className="transform-color-label">
-                Color
+            </label>
+            {transforms.replaceBg !== null && (
+              <input
+                type="text"
+                className="transform-prompt-input"
+                placeholder="e.g. minimalist studio, urban street, marble floor..."
+                value={transforms.replaceBg}
+                onChange={(e) => update({ replaceBg: e.target.value })}
+              />
+            )}
+          </div>
+
+          {/* Smart Crop */}
+          <label className="transform-toggle-row">
+            <span className="transform-toggle-label">
+              Smart Crop
+              <span className="transform-toggle-hint">
+                Auto-detects the garment and crops around it
+              </span>
+            </span>
+            <input
+              type="checkbox"
+              className="transform-checkbox"
+              checked={transforms.smartCrop}
+              onChange={(e) => update({ smartCrop: e.target.checked })}
+            />
+          </label>
+
+          {/* Conditional Badge */}
+          <div className="transform-control-group">
+            <label className="transform-toggle-row">
+              <span className="transform-toggle-label">
+                Badge Overlay
+                <span className="transform-toggle-hint">
+                  Add a text badge in the top-right corner
+                </span>
+              </span>
+              <input
+                type="checkbox"
+                className="transform-checkbox"
+                checked={!!transforms.badge}
+                onChange={(e) =>
+                  update({ badge: e.target.checked ? "NEW" : null })
+                }
+              />
+            </label>
+            {transforms.badge !== null && (
+              <div className="transform-badge-row">
                 <input
-                  type="color"
-                  className="transform-color-input"
-                  value={`#${transforms.badgeColor}`}
+                  type="text"
+                  className="transform-prompt-input transform-badge-text"
+                  placeholder="NEW"
+                  maxLength={12}
+                  value={transforms.badge}
                   onChange={(e) =>
-                    update({ badgeColor: e.target.value.replace("#", "") })
+                    update({ badge: e.target.value.toUpperCase() })
                   }
                 />
-              </label>
-            </div>
-          )}
+                <label className="transform-color-label">
+                  Color
+                  <input
+                    type="color"
+                    className="transform-color-input"
+                    value={`#${transforms.badgeColor}`}
+                    onChange={(e) =>
+                      update({ badgeColor: e.target.value.replace("#", "") })
+                    }
+                  />
+                </label>
+              </div>
+            )}
+          </div>
+
+          {/* Optimization note */}
+          <p className="transform-note">
+            ✓ Auto quality &amp; format optimization is always applied for fast
+            delivery.
+          </p>
         </div>
       </div>
-
-      {/* Optimization note */}
-      <p className="transform-note">
-        ✓ Auto quality &amp; format optimization is always applied for fast
-        delivery.
-      </p>
     </div>
   );
 }

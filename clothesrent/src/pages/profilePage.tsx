@@ -10,9 +10,12 @@ import {
 import LocationAutocompleteInput from "../components/LocationAutocompleteInput";
 import { reverseGeocodeToSimpleAddress } from "../utils/location";
 import {
+  fetchListings,
   fetchPublicUserProfile,
   savePublicUserProfile,
 } from "../api/listings";
+import type { Listing } from "../types/listing";
+import { buildDisplayUrl } from "../utils/cloudinaryUrl";
 
 interface ProfilePageProps {
   profileUserId?: string;
@@ -35,6 +38,10 @@ export default function ProfilePage({ profileUserId, requireName = false }: Prof
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [nameError, setNameError] = useState<string | null>(null);
 
+  // User's own listings
+  const [userListings, setUserListings] = useState<Listing[]>([]);
+  const [listingsLoading, setListingsLoading] = useState(false);
+
   useEffect(() => {
     const fallback: UserProfileData = {
       name: user?.name ?? user?.nickname ?? "",
@@ -55,7 +62,7 @@ export default function ProfilePage({ profileUserId, requireName = false }: Prof
           if (publicProfile.picture) setPicture(publicProfile.picture);
           if (publicProfile.location) setLocation(publicProfile.location);
         })
-        .catch(() => {});
+        .catch(() => { });
       return;
     }
 
@@ -82,6 +89,19 @@ export default function ProfilePage({ profileUserId, requireName = false }: Prof
     user?.picture,
     viewedUserId,
   ]);
+
+  // Fetch user's listings
+  useEffect(() => {
+    if (!viewedUserId || viewedUserId === "anonymous") return;
+    setListingsLoading(true);
+    fetchListings()
+      .then((all) => {
+        const mine = all.filter((l) => l.sellerId === viewedUserId);
+        setUserListings(mine);
+      })
+      .catch(() => { })
+      .finally(() => setListingsLoading(false));
+  }, [viewedUserId]);
 
   useEffect(() => {
     if (!isOwnProfile) return;
@@ -131,7 +151,7 @@ export default function ProfilePage({ profileUserId, requireName = false }: Prof
       picture,
       location,
       email: user?.email,
-    }).catch(() => {});
+    }).catch(() => { });
     setNameError(null);
     setSaved(true);
   };
@@ -175,6 +195,78 @@ export default function ProfilePage({ profileUserId, requireName = false }: Prof
     );
   };
 
+  // Helper to build listing card display URL
+  const getListingDisplayUrl = (listing: Listing) => {
+    if (!listing.cloudinaryUrl) return "";
+    const t = listing.transformations;
+    return buildDisplayUrl(listing.cloudinaryUrl, {
+      width: 300,
+      height: 400,
+      removeBg: t?.removeBg,
+      replaceBg: t?.replaceBg ?? undefined,
+      badge: t?.badge ?? undefined,
+      badgeColor: t?.badgeColor,
+    });
+  };
+
+  // Listings sidebar component
+  const listingsPanel = (
+    <section className="profile-listings-panel">
+      <h2 className="profile-listings-title">
+        {isOwnProfile ? "Your Listings" : "Listings"}
+      </h2>
+      {listingsLoading ? (
+        <p className="profile-listings-empty">Loading listings...</p>
+      ) : userListings.length === 0 ? (
+        <p className="profile-listings-empty">
+          {isOwnProfile
+            ? "No listings yet. Create your first listing!"
+            : "No listings to show."}
+        </p>
+      ) : (
+        <div className="profile-listings-grid">
+          {userListings.map((listing) => {
+            const imgUrl = getListingDisplayUrl(listing);
+            return (
+              <a
+                key={listing._id}
+                href={`/listing/${listing._id}`}
+                className="profile-listing-card"
+              >
+                <div className="profile-listing-img-wrap">
+                  {imgUrl ? (
+                    <img
+                      src={imgUrl}
+                      alt={listing.title}
+                      className="profile-listing-img"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="profile-listing-img profile-listing-img-placeholder">
+                      No Image
+                    </div>
+                  )}
+                </div>
+                <div className="profile-listing-info">
+                  <span className="profile-listing-name">{listing.title}</span>
+                  <span className="profile-listing-price">${listing.price}</span>
+                  <span className={`profile-listing-status profile-listing-status--${listing.status.toLowerCase()}`}>
+                    {listing.status}
+                  </span>
+                </div>
+              </a>
+            );
+          })}
+        </div>
+      )}
+      {isOwnProfile && (
+        <a href="/shop/new-listing" className="profile-new-listing-btn">
+          + Create New Listing
+        </a>
+      )}
+    </section>
+  );
+
   if (loadingProfile) {
     return (
       <main className="profile-page">
@@ -189,12 +281,44 @@ export default function ProfilePage({ profileUserId, requireName = false }: Prof
   if (!isOwnProfile) {
     return (
       <main className="profile-page">
+        <div className="profile-layout">
+          <section className="profile-card">
+            <a href="/shop" className="profile-back-link">
+              Back to Shop
+            </a>
+            <h1 className="font-display profile-title">{name || "User Profile"}</h1>
+            <p className="profile-subtitle">Public seller profile.</p>
+
+            <div className="profile-picture-wrap">
+              {picture ? (
+                <img src={picture} alt="User profile" className="profile-picture" />
+              ) : (
+                <div className="profile-picture profile-picture-fallback">No Image</div>
+              )}
+            </div>
+
+            <label className="profile-label">Name</label>
+            <p className="profile-readonly-field">{name || viewedUserId}</p>
+
+            <label className="profile-label">Location</label>
+            <p className="profile-readonly-field">{location || "Not provided"}</p>
+          </section>
+          {listingsPanel}
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="profile-page">
+      <div className="profile-layout">
         <section className="profile-card">
-          <a href="/shop" className="profile-back-link">
-            Back to Shop
-          </a>
-          <h1 className="font-display profile-title">{name || "User Profile"}</h1>
-          <p className="profile-subtitle">Public seller profile.</p>
+          <h1 className="font-display profile-title">Profile</h1>
+          <p className="profile-subtitle">
+            {requireName
+              ? "Set your profile name to continue. Name is required."
+              : "Manage your look and style identity."}
+          </p>
 
           <div className="profile-picture-wrap">
             {picture ? (
@@ -204,120 +328,94 @@ export default function ProfilePage({ profileUserId, requireName = false }: Prof
             )}
           </div>
 
-          <label className="profile-label">Name</label>
-          <p className="profile-readonly-field">{name || viewedUserId}</p>
+          <label className="profile-label" htmlFor="profile-picture-upload">
+            Profile Picture
+          </label>
+          <input
+            id="profile-picture-upload"
+            type="file"
+            accept="image/*"
+            className="profile-input-file"
+            onChange={handlePictureChange}
+          />
 
-          <label className="profile-label">Location</label>
-          <p className="profile-readonly-field">{location || "Not provided"}</p>
+          <label className="profile-label" htmlFor="profile-name">
+            Name
+          </label>
+          <input
+            id="profile-name"
+            className="profile-input"
+            value={name}
+            onChange={(event) => {
+              setName(event.target.value);
+              setSaved(false);
+              setNameError(null);
+            }}
+            placeholder="Your name"
+            required
+          />
+          {nameError && <p className="profile-error-message">{nameError}</p>}
+
+          <label className="profile-label" htmlFor="profile-email">
+            Email
+          </label>
+          <input
+            id="profile-email"
+            className="profile-input"
+            value={user?.email ?? ""}
+            readOnly
+          />
+
+          <label className="profile-label" htmlFor="profile-style">
+            Style
+          </label>
+          <input
+            id="profile-style"
+            className="profile-input"
+            value={style}
+            onChange={(event) => {
+              setStyle(event.target.value);
+              setSaved(false);
+            }}
+            placeholder="e.g. Goth"
+          />
+
+          <label className="profile-label" htmlFor="profile-location">
+            Location
+          </label>
+          <LocationAutocompleteInput
+            id="profile-location"
+            inputClassName="profile-input"
+            value={location}
+            onChange={(next) => {
+              setLocation(next);
+              setSaved(false);
+              setLocationMessage(null);
+            }}
+            placeholder="e.g. 100 Queen St W, Toronto"
+          />
+          <div className="profile-location-row">
+            <button
+              type="button"
+              className="btn-outline profile-location-btn"
+              onClick={handleUseCurrentLocation}
+              disabled={locationBusy}>
+              {locationBusy ? "Locating..." : "Use Current Location"}
+            </button>
+            {locationMessage && (
+              <p className="profile-location-message">{locationMessage}</p>
+            )}
+          </div>
+
+          <div className="profile-actions">
+            <button type="button" className="btn-primary profile-save-btn" onClick={handleSave}>
+              Save Profile
+            </button>
+            {saved && <span className="profile-saved">Saved</span>}
+          </div>
         </section>
-      </main>
-    );
-  }
-
-  return (
-    <main className="profile-page">
-      <section className="profile-card">
-        <h1 className="font-display profile-title">Profile</h1>
-        <p className="profile-subtitle">
-          {requireName
-            ? "Set your profile name to continue. Name is required."
-            : "Manage your look and style identity."}
-        </p>
-
-        <div className="profile-picture-wrap">
-          {picture ? (
-            <img src={picture} alt="User profile" className="profile-picture" />
-          ) : (
-            <div className="profile-picture profile-picture-fallback">No Image</div>
-          )}
-        </div>
-
-        <label className="profile-label" htmlFor="profile-picture-upload">
-          Profile Picture
-        </label>
-        <input
-          id="profile-picture-upload"
-          type="file"
-          accept="image/*"
-          className="profile-input-file"
-          onChange={handlePictureChange}
-        />
-
-        <label className="profile-label" htmlFor="profile-name">
-          Name
-        </label>
-        <input
-          id="profile-name"
-          className="profile-input"
-          value={name}
-          onChange={(event) => {
-            setName(event.target.value);
-            setSaved(false);
-            setNameError(null);
-          }}
-          placeholder="Your name"
-          required
-        />
-        {nameError && <p className="profile-error-message">{nameError}</p>}
-
-        <label className="profile-label" htmlFor="profile-email">
-          Email
-        </label>
-        <input
-          id="profile-email"
-          className="profile-input"
-          value={user?.email ?? ""}
-          readOnly
-        />
-
-        <label className="profile-label" htmlFor="profile-style">
-          Style
-        </label>
-        <input
-          id="profile-style"
-          className="profile-input"
-          value={style}
-          onChange={(event) => {
-            setStyle(event.target.value);
-            setSaved(false);
-          }}
-          placeholder="e.g. Goth"
-        />
-
-        <label className="profile-label" htmlFor="profile-location">
-          Location
-        </label>
-        <LocationAutocompleteInput
-          id="profile-location"
-          inputClassName="profile-input"
-          value={location}
-          onChange={(next) => {
-            setLocation(next);
-            setSaved(false);
-            setLocationMessage(null);
-          }}
-          placeholder="e.g. 100 Queen St W, Toronto"
-        />
-        <div className="profile-location-row">
-          <button
-            type="button"
-            className="btn-outline profile-location-btn"
-            onClick={handleUseCurrentLocation}
-            disabled={locationBusy}>
-            {locationBusy ? "Locating..." : "Use Current Location"}
-          </button>
-          {locationMessage && (
-            <p className="profile-location-message">{locationMessage}</p>
-          )}
-        </div>
-
-        <div className="profile-actions">
-          <button type="button" className="btn-primary profile-save-btn" onClick={handleSave}>
-            Save Profile
-          </button>
-          {saved && <span className="profile-saved">Saved</span>}
-        </div>
-      </section>
+        {listingsPanel}
+      </div>
     </main>
   );
 }

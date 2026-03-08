@@ -8,6 +8,7 @@ import ImageTransformPanel from "../components/ImageTransformPanel";
 import LocationAutocompleteInput from "../components/LocationAutocompleteInput";
 import { buildDisplayUrl } from "../utils/cloudinaryUrl";
 import { loadUserProfile, type UserProfileData } from "../utils/profileStorage";
+import { navigate } from "../utils/navigate";
 import "./sellerUploadPosting.css";
 
 type ListingDraft = {
@@ -198,7 +199,7 @@ export default function SellerUploadPosting() {
       setSubmitMessage(
         `Listing "${result.item.title}" created successfully! Status: ${result.item.status}`,
       );
-      // Reset everything
+      // Reset local state
       setDraft(INITIAL_DRAFT);
       setSelectedFile(null);
       setLocalPreviewUrl(null);
@@ -206,8 +207,9 @@ export default function SellerUploadPosting() {
       setPublicId(null);
       setAutoTags([]);
       setTransforms({ ...DEFAULT_TRANSFORMATIONS });
-      setStep("upload");
       if (fileInputRef.current) fileInputRef.current.value = "";
+      // Navigate to profile so user can see their listings
+      navigate("/profile");
     } catch (err: any) {
       setSubmitError(err.message || "Failed to create listing");
     } finally {
@@ -267,9 +269,9 @@ export default function SellerUploadPosting() {
             <div
               key={s.key}
               className={`seller-step${step === s.key ? " seller-step--active" : ""}${steps.findIndex((x) => x.key === step) >
-                  steps.findIndex((x) => x.key === s.key)
-                  ? " seller-step--done"
-                  : ""
+                steps.findIndex((x) => x.key === s.key)
+                ? " seller-step--done"
+                : ""
                 }`}>
               {s.label}
             </div>

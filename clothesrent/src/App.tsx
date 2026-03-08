@@ -382,10 +382,10 @@ function Footer() {
     <footer>
       <div className="footer-grid">
         <div>
-          <div className="footer-brand">PFIFFLE</div>
+          <div className="footer-brand">WEAR_ABOUTS</div>
           <div className="footer-tagline">Crafted for the considered.</div>
           <p className="footer-copy">
-            A slow-fashion label rooted in timeless design, responsible
+            A slow-fashion platform rooted in timeless design, responsible
             sourcing, and uncompromising craft.
           </p>
           <div className="social-row">
@@ -410,7 +410,7 @@ function Footer() {
       </div>
 
       <div className="footer-bottom">
-        <span>(c) 2025 Pfiffle. All rights reserved.</span>
+        <span>(c) 2026 wear_abouts. All rights reserved.</span>
         <div className="footer-bottom-links">
           <a href="#" className="footer-link footer-inline-link">
             Privacy
@@ -490,7 +490,7 @@ function SignInPage() {
         <a href="/" className="auth-home-link">
           Back to Home
         </a>
-        <p className="auth-subtitle">Pfiffle Account</p>
+        <p className="auth-subtitle">wear_abouts Account</p>
         <h1 className="font-display auth-title">Sign In</h1>
         {error && <p className="auth-error">Error: {error.message}</p>}
         <div className="auth-actions">

@@ -337,18 +337,18 @@
   line-height: 1.55;
 }
 
-/* Before / After preview */
-.transform-preview-row {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+/* ── Enhance: Photo left, Controls right ── */
+.transform-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 1.5rem;
+  margin-top: 0.5rem;
+  align-items: start;
 }
 
-.transform-preview-col {
-  flex: 1;
+.transform-enhanced-preview {
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: 0.4rem;
 }
 
@@ -553,8 +553,8 @@
     grid-template-columns: 1fr;
   }
 
-  .transform-preview-row {
-    flex-direction: column;
+  .transform-layout {
+    grid-template-columns: 1fr;
   }
 
   .seller-steps {

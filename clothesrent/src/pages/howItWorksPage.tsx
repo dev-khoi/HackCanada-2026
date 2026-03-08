@@ -81,7 +81,7 @@ export default function HowItWorksPage() {
                 </h1>
                 <p className="hiw-subtitle">
                     Thrift stores are everywhere — but finding pieces that match your
-                    taste shouldn't take hours. Pfiffle makes secondhand personal,
+                    taste shouldn't take hours. wear_abouts makes secondhand personal,
                     stylish, and effortless, so you can save money and the planet
                     without sacrificing your look.
                 </p>
@@ -111,7 +111,7 @@ export default function HowItWorksPage() {
                 <p className="hiw-sustain-copy">
                     Fast fashion is cheap, but the planet pays the real price. Thrift
                     is the answer — but scrolling through racks of random stuff hoping
-                    to find your style? That's why people give up. We built Pfiffle
+                    to find your style? That's why people give up. We built wear_abouts
                     so that dressing sustainably is as easy (and stylish) as buying new.
                     AI-powered matching, real listings from real people, zero waste.
                 </p>

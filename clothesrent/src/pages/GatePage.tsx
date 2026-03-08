@@ -79,7 +79,7 @@ export default function GatePage() {
     <div className="gate-root">
       {/* ── Minimal nav ── */}
       <header className="gate-nav">
-        <span className="gate-nav-brand">PFIFFLE</span>
+        <span className="gate-nav-brand">WEAR_ABOUTS</span>
         <div className="gate-nav-actions">
           <GateBtn variant="outline" onClick={goLogin}>Log In</GateBtn>
           <GateBtn variant="primary" onClick={goSignup}>Sign Up</GateBtn>
@@ -90,7 +90,7 @@ export default function GatePage() {
       <section className="gate-hero" ref={heroRef}>
         {/* Big title behind images */}
         <motion.h1 className="gate-hero-title" style={{ y: yTitle }}>
-          PFIFFLE
+          WEAR_ABOUTS
         </motion.h1>
 
         {/* Floating image 1 */}
@@ -215,15 +215,15 @@ export default function GatePage() {
         <Reveal>
           <h2 className="gate-cta-title">Your wardrobe.<br />Reimagined.</h2>
           <GateBtn variant="primary" onClick={goSignup}>
-            Join Pfiffle →
+            Join wear_abouts →
           </GateBtn>
         </Reveal>
       </section>
 
       {/* ── Footer ── */}
       <footer className="gate-footer">
-        <span className="gate-footer-brand">PFIFFLE</span>
-        <span className="gate-footer-copy">© 2026 Pfiffle. All rights reserved.</span>
+        <span className="gate-footer-brand">WEAR_ABOUTS</span>
+        <span className="gate-footer-copy">© 2026 wear_abouts. All rights reserved.</span>
       </footer>
     </div>
   );
