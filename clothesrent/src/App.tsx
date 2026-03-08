@@ -22,6 +22,8 @@ import { fetchListings, fetchPublicUserProfile } from "./api/listings";
 import type { Listing } from "./types/listing";
 import { buildDisplayUrl } from "./utils/cloudinaryUrl";
 import StyleSearchModal from "./components/StyleSearchModal";
+import GatePage from "./pages/GatePage";
+import OnboardingPage from "./pages/OnboardingPage";
 
 const FOOTER_LINKS: Record<string, string[]> = {
   Navigate: ["Home", "Shop", "Profile", "Sign In"],
@@ -643,6 +645,7 @@ export default function App({
   const profileUserId = profileMatch ? decodeURIComponent(profileMatch[1]) : null;
   const [isCheckingRequiredProfile, setIsCheckingRequiredProfile] = useState(true);
   const [mustSetProfileName, setMustSetProfileName] = useState(false);
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -657,11 +660,15 @@ export default function App({
       try {
         const publicProfile = await fetchPublicUserProfile(user.sub);
         if (!cancelled) {
-          setMustSetProfileName(!publicProfile.name.trim());
+          const noName = !publicProfile.name.trim();
+          setMustSetProfileName(noName);
+          setNeedsOnboarding(noName);
         }
       } catch {
         if (!cancelled) {
-          setMustSetProfileName(false);
+          // New user — profile doesn't exist yet, trigger onboarding
+          setMustSetProfileName(true);
+          setNeedsOnboarding(true);
         }
       } finally {
         if (!cancelled) {
@@ -683,18 +690,45 @@ export default function App({
   );
 
 
+  // Show gate landing page for unauthenticated users at root (after Auth0 finishes loading)
+  if (!isLoading && !isAuthenticated && path === "/") {
+    return <GatePage />;
+  }
+
   // Redirect unauthenticated users away from protected routes (only after Auth0 has finished loading)
   if (!isLoading && !isAuthenticated && isAccessingProtectedRoute) {
     return <SignInPage />;
   }
 
-  // Only redirect to profile AFTER check completes (no blocking loading screen)
-  if (isAuthenticated && !isCheckingRequiredProfile && mustSetProfileName && !path.startsWith("/profile")) {
-    return <ProfilePage requireName />;
+  // Show onboarding for new users who haven't set up their profile yet
+  if (isAuthenticated && !isCheckingRequiredProfile && needsOnboarding && !path.startsWith("/profile")) {
+    return (
+      <OnboardingPage
+        onComplete={() => {
+          setNeedsOnboarding(false);
+          setMustSetProfileName(false);
+          window.history.replaceState({}, "", "/");
+          setPath("/");
+        }}
+      />
+    );
   }
 
   if (path === "/signin") {
     return <SignInPage />;
+  }
+
+  if (path === "/onboarding") {
+    return (
+      <OnboardingPage
+        onComplete={() => {
+          setNeedsOnboarding(false);
+          setMustSetProfileName(false);
+          window.history.replaceState({}, "", "/");
+          setPath("/");
+        }}
+      />
+    );
   }
 
   if (path === "/shop/new-listing") {

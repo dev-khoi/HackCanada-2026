@@ -26,13 +26,15 @@ interface SavesContextValue {
 
 const SavesContext = createContext<SavesContextValue | null>(null);
 
-const STORAGE_KEY = "maison-ore-saves";
+function getStorageKey(userId: string) {
+    return userId ? `maison-ore-saves-${userId}` : "maison-ore-saves";
+}
 
 const DEFAULT_BOARD: Board = { id: "all", name: "All Saves" };
 
-function loadSaves(): { saved: SavedItem[]; boards: Board[] } {
+function loadSaves(userId: string): { saved: SavedItem[]; boards: Board[] } {
     try {
-        const raw = localStorage.getItem(STORAGE_KEY);
+        const raw = localStorage.getItem(getStorageKey(userId));
         if (!raw) return { saved: [], boards: [DEFAULT_BOARD] };
         const parsed = JSON.parse(raw);
         return {
@@ -44,16 +46,21 @@ function loadSaves(): { saved: SavedItem[]; boards: Board[] } {
     }
 }
 
-function persist(saved: SavedItem[], boards: Board[]) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ saved, boards }));
+function persist(userId: string, saved: SavedItem[], boards: Board[]) {
+    localStorage.setItem(getStorageKey(userId), JSON.stringify({ saved, boards }));
 }
 
-export function SavesProvider({ children }: { children: ReactNode }) {
-    const [data, setData] = useState(loadSaves);
+export function SavesProvider({ userId = "", children }: { userId?: string; children: ReactNode }) {
+    const [data, setData] = useState(() => loadSaves(userId));
+
+    // Re-load when user changes (login/logout/switch)
+    useEffect(() => {
+        setData(loadSaves(userId));
+    }, [userId]);
 
     useEffect(() => {
-        persist(data.saved, data.boards);
-    }, [data]);
+        persist(userId, data.saved, data.boards);
+    }, [data, userId]);
 
     const save = useCallback((listing: Listing, boardId = "all") => {
         setData((prev) => {

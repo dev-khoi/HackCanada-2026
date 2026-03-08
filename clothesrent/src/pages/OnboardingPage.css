@@ -1,0 +1,372 @@
+/* ── OnboardingPage ── */
+.ob-root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #f9f8f5;
+  color: #251f33;
+  font-family: "DM Sans", sans-serif;
+  padding: 2rem 1.5rem 3rem;
+}
+
+/* ── Progress bar ── */
+.ob-progress {
+  display: flex;
+  gap: 6px;
+  width: 240px;
+  margin-bottom: 2.5rem;
+  margin-top: 1rem;
+}
+
+.ob-progress-seg {
+  flex: 1;
+  height: 4px;
+  background: #e2dfd8;
+  border-radius: 20px;
+  transition: background 0.35s ease;
+}
+
+.ob-progress-seg-done {
+  background: #4caf50;
+}
+
+/* ── Step container ── */
+.ob-step {
+  width: 100%;
+  max-width: 460px;
+  display: flex;
+  flex-direction: column;
+  animation: ob-fade-in 0.4s ease;
+}
+
+@keyframes ob-fade-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Title / subtitle ── */
+.ob-title {
+  font-family: "Bebas Neue", sans-serif;
+  font-size: clamp(2rem, 5vw, 2.8rem);
+  font-weight: 400;
+  line-height: 1.05;
+  color: #251f33;
+  margin: 0 0 0.5rem;
+  text-align: center;
+}
+
+.ob-subtitle {
+  font-size: 0.88rem;
+  color: #8a7f96;
+  text-align: center;
+  margin: 0 0 2rem;
+  line-height: 1.55;
+}
+
+/* ── Avatar ── */
+.ob-avatar-wrap {
+  align-self: center;
+  position: relative;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  overflow: hidden;
+  cursor: pointer;
+  background: #e8e4dd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+  transition: box-shadow 0.25s ease;
+}
+
+.ob-avatar-wrap:hover {
+  box-shadow: 0 4px 20px rgba(37, 31, 51, 0.15);
+}
+
+.ob-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ob-avatar-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ob-avatar-plus {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #4caf50;
+  color: #fff;
+  font-size: 1.2rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #f9f8f5;
+  line-height: 1;
+}
+
+.ob-avatar-label {
+  text-align: center;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #251f33;
+  margin: 0 0 0.2rem;
+}
+
+.ob-avatar-hint {
+  text-align: center;
+  font-size: 0.76rem;
+  color: #4caf50;
+  margin: 0 0 2rem;
+}
+
+.ob-hidden-input {
+  display: none;
+}
+
+/* ── Labels ── */
+.ob-label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #251f33;
+  margin: 0 0 0.45rem;
+}
+
+.ob-label-optional {
+  font-weight: 400;
+  color: #8a7f96;
+  font-size: 0.78rem;
+}
+
+/* ── Inputs ── */
+.ob-input {
+  display: block;
+  width: 100%;
+  padding: 0.85rem 1rem;
+  font-family: "DM Sans", sans-serif;
+  font-size: 0.92rem;
+  color: #251f33;
+  background: #fff;
+  border: 1px solid rgba(37, 31, 51, 0.15);
+  border-radius: 14px;
+  outline: none;
+  margin-bottom: 1.25rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
+}
+
+.ob-input:focus {
+  border-color: #251f33;
+  box-shadow: 0 0 0 3px rgba(37, 31, 51, 0.08);
+}
+
+.ob-input-error {
+  border-color: #e53935;
+}
+
+.ob-error {
+  font-size: 0.78rem;
+  color: #e53935;
+  margin: -0.8rem 0 1rem;
+}
+
+/* ── Continue / Finish button ── */
+.ob-continue-btn {
+  width: 100%;
+  padding: 1rem;
+  font-family: "DM Sans", sans-serif;
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #f9f8f5;
+  background: #251f33;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  margin-top: 1.5rem;
+  transition: background 0.22s ease, box-shadow 0.22s ease, transform 0.15s ease;
+}
+
+.ob-continue-btn:hover:not(:disabled) {
+  background: #3a3352;
+  box-shadow: 0 6px 24px rgba(37, 31, 51, 0.2);
+  transform: translateY(-1px);
+}
+
+.ob-continue-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.ob-continue-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ── Size chips ── */
+.ob-size-group-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #251f33;
+  margin: 0 0 0.6rem;
+}
+
+.ob-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 1.6rem;
+}
+
+.ob-size-chip {
+  min-width: 52px;
+  padding: 0.55rem 0.9rem;
+  font-family: "DM Sans", sans-serif;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #251f33;
+  background: #fff;
+  border: 1.5px solid rgba(37, 31, 51, 0.18);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.ob-size-chip:hover {
+  border-color: #251f33;
+  background: rgba(37, 31, 51, 0.04);
+}
+
+.ob-size-chip-active {
+  background: #251f33;
+  color: #f9f8f5;
+  border-color: #251f33;
+}
+
+.ob-size-chip-active:hover {
+  background: #3a3352;
+  border-color: #3a3352;
+  color: #f9f8f5;
+}
+
+/* ── Fit upload section ── */
+.ob-fits-section {
+  margin-top: 0.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(37, 31, 51, 0.08);
+}
+
+.ob-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.3rem;
+  font-family: "DM Sans", sans-serif;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #251f33;
+  background: transparent;
+  border: 1.5px solid rgba(37, 31, 51, 0.2);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 0.75rem;
+}
+
+.ob-upload-btn:hover {
+  border-color: #251f33;
+  background: rgba(37, 31, 51, 0.04);
+}
+
+.ob-upload-icon {
+  font-size: 1rem;
+}
+
+.ob-fit-previews {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
+.ob-fit-thumb {
+  width: 64px;
+  height: 64px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 1px solid rgba(37, 31, 51, 0.1);
+}
+
+.ob-analyze-status {
+  font-size: 0.78rem;
+  color: #4caf50;
+  margin: 0.25rem 0 0;
+}
+
+/* ── Bottom row (back + finish) ── */
+.ob-bottom-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 2rem;
+}
+
+.ob-back-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  border: 1.5px solid rgba(37, 31, 51, 0.18);
+  background: #fff;
+  font-size: 1.3rem;
+  color: #251f33;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.18s ease;
+}
+
+.ob-back-btn:hover {
+  border-color: #251f33;
+  background: rgba(37, 31, 51, 0.04);
+}
+
+.ob-finish-btn {
+  flex: 1;
+}
+
+/* ── Responsive ── */
+@media (max-width: 480px) {
+  .ob-root {
+    padding: 1.5rem 1rem 2.5rem;
+  }
+
+  .ob-progress {
+    width: 180px;
+  }
+
+  .ob-title {
+    font-size: 2rem;
+  }
+
+  .ob-chips {
+    gap: 6px;
+  }
+
+  .ob-size-chip {
+    min-width: 44px;
+    padding: 0.45rem 0.7rem;
+    font-size: 0.78rem;
+  }
+}
