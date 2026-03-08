@@ -1,0 +1,32 @@
+# Render Blueprint: backend only (frontend is on Cloudflare Pages).
+# To use: Dashboard → New → Blueprint → Connect repo → Select this file.
+# Add MONGO_URI (and other secrets) in the Dashboard when prompted or in Environment.
+
+services:
+  - type: web
+    name: clothesrent-backend
+    runtime: node
+    region: oregon
+
+    # Monorepo: service lives in backend/
+    rootDir: backend
+
+    buildCommand: npm install && npm run build
+    startCommand: node dist/server.js
+
+    healthCheckPath: /health
+
+    envVars:
+      - key: MONGO_URI
+        sync: false
+      # Optional: add in Dashboard or uncomment and set sync: false
+      # - key: CLOUDINARY_CLOUD_NAME
+      #   sync: false
+      # - key: CLOUDINARY_API_KEY
+      #   sync: false
+      # - key: CLOUDINARY_API_SECRET
+      #   sync: false
+      # - key: GEMINI_API_KEY
+      #   sync: false
+      # - key: CORS_ORIGINS
+      #   value: https://threadify.pages.dev

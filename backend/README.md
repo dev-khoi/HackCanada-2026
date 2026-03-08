@@ -188,12 +188,34 @@ The backend includes a **Dockerfile** so the process runs as `node dist/server.j
 
 If you see "Stopping Container" and "npm error signal SIGTERM" in logs, use a **Custom Start Command** in Railway: `node dist/server.js` (so Node receives SIGTERM). The server now **listens immediately** before MongoDB connects so Railway's health check gets 200 and doesn't kill the container. If the container stops after ~15s and you see "Received SIGTERM", Railway may be replacing it with a new deployment — check the Deployments tab for a newer Active deployment and test your backend /health URL in a browser; if it returns 200, the current deployment is up. Use backend/railway.toml to set healthcheckPath and healthcheckTimeout if needed.
 
+### Render
+
+Use these settings when creating a **Web Service** for the backend (monorepo: backend lives in `backend/`).
+
+| Setting | Value |
+|--------|--------|
+| **Root Directory** | `backend` |
+| **Environment** | Node |
+| **Build Command** | `npm install && npm run build` |
+| **Start Command** | `node dist/server.js` |
+| **Health Check Path** | `/health` |
+
+**Environment variables** (Dashboard → Environment):
+
+- `MONGO_URI` — **required** (MongoDB connection string)
+- `PORT` — set by Render (default 10000); app uses it automatically
+- `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` — for uploads
+- `GEMINI_API_KEY` — optional, for style analysis
+- `CORS_ORIGINS` — optional; e.g. `https://threadify.pages.dev` (app already allows `threadify.pages.dev` and `*.pages.dev`)
+
+The app binds to `0.0.0.0` and uses `process.env.PORT`, so no extra config is needed. Optional: use a **Blueprint** — add `render.yaml` at the repo root (see project root) and in Render choose **New → Blueprint**, then connect the repo; Render will create the service with the above settings and prompt for `MONGO_URI`.
+
 ### Cloudflare Pages (frontend)
 
 Set the build-time variable so the frontend talks to your backend:
 
 - **Variable name**: `VITE_API_URL`
-- **Value**: Your backend base URL, e.g. `https://hackcanada-2026-production.up.railway.app`
+- **Value**: Your backend base URL, e.g. `https://your-app.onrender.com` or your Railway URL
 
 No trailing slash. Rebuild the frontend after changing this.
 

@@ -12,6 +12,7 @@ const app = express();
 const allowedOrigins = [
   "https://threadify.pages.dev",
   "https://hackcanada-2026-production.up.railway.app",
+  "https://hackcanada-2026.onrender.com",
   "http://localhost:5173",
   "http://localhost:5174",
   "http://127.0.0.1:5173",
@@ -40,7 +41,8 @@ app.use(
       }
 
       const isPagesPreview = /^https:\/\/[a-z0-9-]+\.pages\.dev$/i.test(origin);
-      if (allowedOriginSet.has(origin) || isPagesPreview) {
+      const isRender = /^https:\/\/[a-z0-9-]+\.onrender\.com$/i.test(origin);
+      if (allowedOriginSet.has(origin) || isPagesPreview || isRender) {
         callback(null, true);
         return;
       }
