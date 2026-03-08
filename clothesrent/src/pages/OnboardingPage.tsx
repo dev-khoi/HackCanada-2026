@@ -195,6 +195,7 @@ export default function OnboardingPage({ onComplete }: OnboardingPageProps) {
           {/* Location */}
           <label className="ob-label">Location</label>
           <LocationAutocompleteInput
+            id="onboarding-location"
             inputClassName="ob-input"
             value={location}
             onChange={setLocation}

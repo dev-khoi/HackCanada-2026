@@ -354,7 +354,7 @@ Send as **multipart/form-data**:
 
 ---
 
-### Listings — `/api/listings`
+### Location`r`n`r`n| Method | Endpoint | Query | Description |`r`n|--------|----------|-------|-------------|`r`n| GET | `/api/location/suggest` | `?q=toronto` | Address autocomplete suggestions (server-side geocoder proxy) |`r`n`r`n---`r`n`r`n### Listings — `/api/listings`
 
 | Method | Endpoint | Body / Query | Description |
 | --- | --- | --- | --- |
@@ -700,5 +700,6 @@ The frontend (`clothesrent/`) at `http://localhost:5173` connects to this backen
 **Style search**:
 
 - `POST /api/style/search` with `{ query: "..." }`
+
 
 

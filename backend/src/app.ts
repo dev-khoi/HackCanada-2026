@@ -6,6 +6,7 @@ import purchaseRoutes from "./routes/purchaseRoutes";
 import uploadRoutes from "./routes/uploadRoutes";
 import userRoutes from "./routes/userRoutes";
 import outfitRoutes from "./routes/outfitRoutes";
+import locationRoutes from "./routes/locationRoutes";
 
 const app = express();
 
@@ -63,6 +64,7 @@ app.use("/api/purchases", purchaseRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/outfit", outfitRoutes);
+app.use("/api/location", locationRoutes);
 
 app.get("/", (_req, res) => {
   res.status(200).send("ok");

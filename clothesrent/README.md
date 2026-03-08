@@ -210,7 +210,7 @@ Three-step interactive listing creator with live AI transformation preview:
 ### 5. Profile (`/profile`)
 
 - Protected page for authenticated users
-- Displays profile picture, name, style, and location (with type-ahead suggestions (address, postal code, city, country))
+- Displays profile picture, name, style, and location (with type-ahead suggestions (address, postal code, city, country), backed by `/api/location/suggest` for better reliability)
 - "Use Current Location" button asks browser permission and reverse-fills the address
 - Profile picture can be changed via local image upload
 - Name/style and custom picture are saved in local storage per Auth0 user
@@ -485,6 +485,8 @@ All images served through Cloudinary's CDN with transformations applied via URL 
 Display components (`ListingsPanel`, `ThriftOutPanel`) read the `listing.transformations` field from the database and pass it to `buildDisplayUrl()` so the seller's chosen enhancements are applied consistently everywhere the image is shown.
 
 Grid cards are capped at `max-width: 320px` with `auto-fill` layout (no stretching on wide screens). All images use `loading="lazy"` for deferred loading below the fold.
+
+
 
 
 
