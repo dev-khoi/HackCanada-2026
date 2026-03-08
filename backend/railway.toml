@@ -1,0 +1,14 @@
+# Railway deploy config (backend service).
+# Place in repo root or set Root Directory to backend so this file is used.
+# See https://docs.railway.app/deploy/config-as-code
+
+[build]
+# If Railway uses Nixpacks (no Dockerfile), build output goes to dist/
+# builder = "nixpacks"
+
+[deploy]
+# Health check: Railway hits this until 200 or timeout. Default timeout is 300s.
+healthcheckPath = "/health"
+healthcheckTimeout = 120
+# Start command override can be set in Railway UI instead:
+# startCommand = "node dist/server.js"
