@@ -24,6 +24,24 @@ export async function geocodeAddressToCoords(
 ): Promise<{ lat: number; lng: number } | null> {
   const trimmed = address.trim();
   if (!trimmed) return null;
+
+  // Use the backend proxy — avoids Nominatim per-browser-IP rate limits (429).
+  const apiBase = (import.meta as unknown as { env: Record<string, string> }).env?.VITE_API_URL
+    ?? "http://localhost:8000";
+
+  try {
+    const proxyRes = await fetch(
+      `${apiBase.replace(/\/+$/, "")}/api/location/geocode?q=${encodeURIComponent(trimmed)}`,
+    );
+    if (proxyRes.ok) {
+      const data = (await proxyRes.json()) as { lat: number; lng: number } | null;
+      return data ?? null;
+    }
+  } catch {
+    // proxy unavailable — fall through to direct call
+  }
+
+  // Fallback: direct Nominatim (may still be rate-limited)
   try {
     const response = await fetch(
       `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(trimmed)}`,
@@ -39,6 +57,7 @@ export async function geocodeAddressToCoords(
     return null;
   }
 }
+
 
 export async function reverseGeocodeToSimpleAddress(
   latitude: number,
@@ -139,32 +158,40 @@ export type DistanceResult =
  * Geocodes the address via Nominatim and runs a haversine calculation.
  */
 export function useListingDistance(listingAddress: string | undefined): DistanceResult {
-  const userCoords = useUserLocation();
   const [result, setResult] = useState<DistanceResult>({ status: "loading" });
 
   useEffect(() => {
-    if (!navigator.geolocation) {
-      setResult({ status: "unavailable" });
-      return;
-    }
-    if (!listingAddress) {
-      setResult({ status: "unavailable" });
-      return;
-    }
-    if (!userCoords) return; // waiting for GPS
+    if (!listingAddress) { setResult({ status: "unavailable" }); return; }
+    if (!navigator.geolocation) { setResult({ status: "unavailable" }); return; }
 
     let cancelled = false;
     setResult({ status: "loading" });
 
-    geocodeAddressToCoords(listingAddress).then((listing) => {
+    // Get GPS with a 6-second timeout — avoids permanent "loading" if denied
+    const gpsPromise = new Promise<GeolocationCoordinates | null>((resolve) => {
+      const timer = setTimeout(() => resolve(null), 6000);
+      navigator.geolocation.getCurrentPosition(
+        (pos) => { clearTimeout(timer); resolve(pos.coords); },
+        () => { clearTimeout(timer); resolve(null); },
+        { maximumAge: 300_000, timeout: 6000 },
+      );
+    });
+
+    gpsPromise.then(async (gps) => {
+      if (cancelled) return;
+      if (!gps) { setResult({ status: "unavailable" }); return; }
+
+      const listing = await geocodeAddressToCoords(listingAddress);
       if (cancelled) return;
       if (!listing) { setResult({ status: "unavailable" }); return; }
-      const km = haversineKm(userCoords.lat, userCoords.lng, listing.lat, listing.lng);
+
+      const km = haversineKm(gps.latitude, gps.longitude, listing.lat, listing.lng);
       setResult({ status: "ok", km, label: formatDistance(km) });
     });
 
     return () => { cancelled = true; };
-  }, [listingAddress, userCoords]);
+  }, [listingAddress]);
 
   return result;
 }
+

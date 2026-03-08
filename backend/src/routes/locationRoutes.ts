@@ -119,4 +119,28 @@ router.get("/suggest", async (req: Request, res: Response) => {
   }
 });
 
+router.get("/geocode", async (req: Request, res: Response) => {
+  const q = String(req.query.q ?? "").trim();
+  if (!q) { res.status(400).json({ error: "q is required" }); return; }
+
+  if (geocodeCache.has(q)) {
+    res.json(geocodeCache.get(q) ?? null);
+    return;
+  }
+
+  try {
+    // Try Photon first (no rate limits), fall back to Nominatim
+    const coords = await geocodeWithPhoton(q) ?? await geocodeWithNominatim(q);
+
+    if (geocodeCache.size >= MAX_GEOCODE_CACHE) {
+      geocodeCache.delete(geocodeCache.keys().next().value as string);
+    }
+    geocodeCache.set(q, coords);
+    res.json(coords);
+  } catch {
+    res.status(502).json(null);
+  }
+});
+
+
 export default router;

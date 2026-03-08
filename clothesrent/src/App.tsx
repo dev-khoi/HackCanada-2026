@@ -261,14 +261,7 @@ interface ListingPin {
 }
 
 function NearbyMapSection({ listings }: { listings: Listing[] }) {
-  const { user } = useAuth0();
-  const gpsCoords = useUserLocation(); // browser GPS – highest priority center
-  const [userMapSpot, setUserMapSpot] = useState<{
-    name: string;
-    address: string;
-    lat: number;
-    lng: number;
-  } | null>(null);
+  const gpsCoords = useUserLocation();
   const [listingPins, setListingPins] = useState<ListingPin[]>([]);
 
   // Geocode listing addresses
@@ -308,50 +301,10 @@ function NearbyMapSection({ listings }: { listings: Listing[] }) {
     return () => { cancelled = true; };
   }, [listings]);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    const refreshUserSpot = async () => {
-      if (!user?.sub) {
-        setUserMapSpot(null);
-        return;
-      }
-
-      const fallbackProfile: UserProfileData = {
-        name: user?.name ?? user?.nickname ?? "You",
-        style: "",
-        picture: user?.picture ?? "",
-        location: "",
-      };
-      const profile = loadUserProfile(user.sub, fallbackProfile);
-      if (!profile.location.trim()) {
-        setUserMapSpot(null);
-        return;
-      }
-
-      const coords = await geocodeAddressToCoords(profile.location);
-      if (cancelled || !coords) return;
-
-      setUserMapSpot({
-        name: profile.name || "Your profile",
-        address: profile.location,
-        lat: coords.lat,
-        lng: coords.lng,
-      });
-    };
-
-    const onProfileUpdated = () => {
-      refreshUserSpot();
-    };
-
-    refreshUserSpot();
-    window.addEventListener(PROFILE_UPDATED_EVENT, onProfileUpdated);
-
-    return () => {
-      cancelled = true;
-      window.removeEventListener(PROFILE_UPDATED_EVENT, onProfileUpdated);
-    };
-  }, [user?.name, user?.nickname, user?.picture, user?.sub]);
+  // Priority: 1. browser GPS  2. Toronto fallback
+  const center: [number, number] = gpsCoords
+    ? [gpsCoords.lat, gpsCoords.lng]
+    : DEFAULT_MAP_CENTER;
 
   return (
     <section className="map-section">
@@ -361,100 +314,64 @@ function NearbyMapSection({ listings }: { listings: Listing[] }) {
           Rentals Around <em>You</em>
         </h3>
         <p className="map-subtitle">
-          Nearby rental spots plus your saved profile location.
+          Browse listings near your current location.
         </p>
       </div>
 
       <div className="map-shell">
-        {/*
-          Keep map centered on profile location when available;
-          fallback to Toronto center otherwise.
-        */}
-        {(() => {
-          // Priority: 1. browser GPS  2. profile location  3. Toronto fallback
-          const center: [number, number] = gpsCoords
-            ? [gpsCoords.lat, gpsCoords.lng]
-            : userMapSpot
-              ? [userMapSpot.lat, userMapSpot.lng]
-              : DEFAULT_MAP_CENTER;
+        <MapContainer
+          center={center}
+          zoom={11}
+          scrollWheelZoom={false}
+          className="leaflet-map">
+          <MapRecenter center={center} />
+          <TileLayer
+            attribution="&copy; OpenStreetMap contributors"
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          {listingPins.map((pin) => {
+            const icon = L.divIcon({
+              className: "",
+              html: `<div class="listing-marker-wrap"><div class="listing-marker">${pin.imgUrl ? `<img src="${pin.imgUrl}" alt="" loading="lazy" />` : `<span class="listing-marker-dot"></span>`
+                }</div></div>`,
+              iconSize: [80, 80],
+              iconAnchor: [40, 40],
+              popupAnchor: [0, -42],
+            });
+            return (
+              <Marker key={pin.id} position={[pin.lat, pin.lng]} icon={icon}>
+                <Popup className="map-popup">
+                  <strong>{pin.title}</strong>
+                  {pin.dailyRate > 0 && <span className="map-popup-meta">${pin.dailyRate}/day &middot; </span>}
+                  <span className="map-popup-meta">${pin.price} buy</span>
+                  <a href={pin.href} className="map-popup-link">View &rarr;</a>
+                </Popup>
+              </Marker>
+            );
+          })}
 
-          return (
-            <MapContainer
-              center={center}
-              zoom={11}
-              scrollWheelZoom={false}
-              className="leaflet-map">
-              <MapRecenter center={center} />
-              <TileLayer
-                attribution="&copy; OpenStreetMap contributors"
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-              {listingPins.map((pin) => {
-                const icon = L.divIcon({
-                  className: "",
-                  html: `<div class="listing-marker-wrap"><div class="listing-marker">${pin.imgUrl ? `<img src="${pin.imgUrl}" alt="" loading="lazy" />` : `<span class="listing-marker-dot"></span>`
-                    }</div></div>`,
-                  iconSize: [80, 80],
-                  iconAnchor: [40, 40],
-                  popupAnchor: [0, -42],
-                });
-                return (
-                  <Marker key={pin.id} position={[pin.lat, pin.lng]} icon={icon}>
-                    <Popup className="map-popup">
-                      <strong>{pin.title}</strong>
-                      {pin.dailyRate > 0 && <span className="map-popup-meta">${pin.dailyRate}/day &middot; </span>}
-                      <span className="map-popup-meta">${pin.price} buy</span>
-                      <a href={pin.href} className="map-popup-link">View &rarr;</a>
-                    </Popup>
-                  </Marker>
-                );
-              })}
+          {/* GPS "You are here" pin */}
+          {gpsCoords && (() => {
+            const youIcon = L.divIcon({
+              className: "",
+              html: `<div class="you-marker-wrap"><div class="you-marker"><div class="you-marker-pulse"></div><span>You</span></div></div>`,
+              iconSize: [80, 80],
+              iconAnchor: [40, 40],
+              popupAnchor: [0, -42],
+            });
+            return (
+              <Marker position={[gpsCoords.lat, gpsCoords.lng]} icon={youIcon}>
+                <Popup className="map-popup"><strong>You are here</strong></Popup>
+              </Marker>
+            );
+          })()}
 
-              {/* GPS "You are here" pin */}
-              {gpsCoords && (() => {
-                const youIcon = L.divIcon({
-                  className: "",
-                  html: `<div class="you-marker-wrap"><div class="you-marker"><div class="you-marker-pulse"></div><span>You</span></div></div>`,
-                  iconSize: [80, 80],
-                  iconAnchor: [40, 40],
-                  popupAnchor: [0, -42],
-                });
-                return (
-                  <Marker position={[gpsCoords.lat, gpsCoords.lng]} icon={youIcon}>
-                    <Popup className="map-popup"><strong>You are here</strong></Popup>
-                  </Marker>
-                );
-              })()}
-
-              {/* Profile location pin (if different from GPS) */}
-              {userMapSpot && (() => {
-                const profileIcon = L.divIcon({
-                  className: "",
-                  html: `<div class="you-marker-wrap"><div class="you-marker you-marker--profile"><span>🏠</span></div></div>`,
-                  iconSize: [80, 80],
-                  iconAnchor: [40, 40],
-                  popupAnchor: [0, -42],
-                });
-                return (
-                  <Marker
-                    key={`profile-${userMapSpot.lat}-${userMapSpot.lng}`}
-                    position={[userMapSpot.lat, userMapSpot.lng]}
-                    icon={profileIcon}>
-                    <Popup className="map-popup">
-                      <strong>{userMapSpot.name}</strong>
-                      <span className="map-popup-meta">{userMapSpot.address}</span>
-                    </Popup>
-                  </Marker>
-                );
-              })()}
-
-            </MapContainer>
-          );
-        })()}
+        </MapContainer>
       </div>
     </section>
   );
 }
+
 
 function Footer() {
   const toHref = (link: string) => {
