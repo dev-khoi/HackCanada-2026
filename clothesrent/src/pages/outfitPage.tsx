@@ -4,6 +4,25 @@ import { buildDisplayUrl } from "../utils/cloudinaryUrl";
 import { navigate } from "../utils/navigate";
 import gsap from "gsap";
 
+/* ─── Clothing conveyor belt ─── */
+const CONVEYOR_WORDS = [
+  "TOP", "DRESS", "BAG", "SHOE", "COAT", "HAT",
+  "SCARF", "BELT", "SKIRT", "BOOT", "GLOVE", "RING",
+];
+
+function ClothingConveyor() {
+  const words = [...CONVEYOR_WORDS, ...CONVEYOR_WORDS];
+  return (
+    <div className="outfit-conveyor-wrap" aria-hidden="true">
+      <div className="outfit-conveyor">
+        {words.map((w, i) => (
+          <span key={i} className="outfit-conveyor-item">{w}</span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 const SLOT_LABELS: Record<string, string> = {
   top: "Top",
   bottom: "Bottom",
@@ -211,7 +230,7 @@ export default function OutfitPage() {
       <section className="outfit-hero">
         <div className="section-eyebrow">AI Wardrobe</div>
         <h1 className="font-display outfit-title">
-          Describe your <em>look</em>
+          Describe your <em className="outfit-look">look</em>
         </h1>
         <p className="outfit-subtitle">
           Tell us the vibe and we'll build a rentable outfit from real listings near you.
@@ -233,6 +252,8 @@ export default function OutfitPage() {
 
         {error && <p className="outfit-error">{error}</p>}
       </section>
+
+      <ClothingConveyor />
 
       {loading && (
         <section className="outfit-loading">

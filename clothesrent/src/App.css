@@ -1457,6 +1457,34 @@ footer {
   max-width: 680px;
   margin: 0 auto 3rem;
   text-align: center;
+  animation: outfitHeroIn 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes outfitHeroIn {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.outfit-hero .section-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  animation: outfitHeroIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.05s both;
+}
+
+.outfit-hero .section-eyebrow::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #4caf82;
+  animation: outfitDotPulse 2.4s ease-in-out infinite;
+}
+
+@keyframes outfitDotPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.45; transform: scale(0.75); }
 }
 
 .outfit-title {
@@ -1464,11 +1492,24 @@ footer {
   font-weight: 300;
   letter-spacing: -0.01em;
   margin-top: 0.6rem;
+  animation: outfitHeroIn 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
 }
 
-.outfit-title em {
-  color: var(--warm-grey);
-  font-style: italic;
+/* "look" — Caveat sketch font + green */
+.outfit-look {
+  font-family: "Caveat", cursive;
+  font-style: normal;
+  font-weight: 700;
+  font-size: 1.18em;
+  color: #4caf82;
+  letter-spacing: 0.01em;
+  display: inline-block;
+  animation: outfitLookIn 1s cubic-bezier(0.22, 1, 0.36, 1) 0.25s both;
+}
+
+@keyframes outfitLookIn {
+  from { opacity: 0; transform: translateY(12px) rotate(-2deg); }
+  to   { opacity: 1; transform: translateY(0) rotate(0deg); }
 }
 
 .outfit-subtitle {
@@ -1477,12 +1518,14 @@ footer {
   font-size: 0.88rem;
   letter-spacing: 0.04em;
   line-height: 1.7;
+  animation: outfitHeroIn 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.18s both;
 }
 
 .outfit-form {
   display: flex;
   gap: 0.75rem;
   margin-top: 1.8rem;
+  animation: outfitHeroIn 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.26s both;
 }
 
 .outfit-input {
@@ -1494,13 +1537,59 @@ footer {
   font-size: 0.88rem;
   font-weight: 300;
   padding: 0.75rem 1rem;
-  border-radius: 4px;
-  transition: border-color 0.2s;
+  border-radius: 12px;
+  transition: border-color 0.22s, box-shadow 0.22s;
 }
 
 .outfit-input:focus {
   outline: none;
-  border-color: var(--charcoal);
+  border-color: #4caf82;
+  box-shadow: 0 0 0 3px rgba(76, 175, 130, 0.13);
+}
+
+/* ── Clothing conveyor belt ── */
+.outfit-conveyor-wrap {
+  overflow: hidden;
+  padding: 1.2rem 0;
+  margin-bottom: 0.5rem;
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 12%,
+    black 88%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 12%,
+    black 88%,
+    transparent 100%
+  );
+}
+
+.outfit-conveyor {
+  display: flex;
+  width: max-content;
+  gap: 0;
+  animation: outfitConveyorScroll 28s linear infinite;
+}
+
+.outfit-conveyor-item {
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 3.8rem;
+  line-height: 1;
+  color: #ede8e0;
+  letter-spacing: 0.06em;
+  padding: 0 1.8rem;
+  flex-shrink: 0;
+  white-space: nowrap;
+  user-select: none;
+}
+
+@keyframes outfitConveyorScroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
 }
 
 .outfit-btn {
