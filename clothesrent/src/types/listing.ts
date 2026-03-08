@@ -16,6 +16,12 @@ export const DEFAULT_TRANSFORMATIONS: ImageTransformations = {
   badgeColor: "e74c3c",
 };
 
+export interface ListingSize {
+  letter?: string;
+  waist?: string;
+  shoe?: string;
+}
+
 export interface Listing {
   _id: string;
   sellerId: string;
@@ -29,6 +35,7 @@ export interface Listing {
   tags: string[];
   location?: string;
   bbLink?: string;
+  size?: ListingSize;
   status: ListingStatus;
   transformations: ImageTransformations;
   createdAt: string;
@@ -62,6 +69,7 @@ export interface CreateListingBody {
   dailyRate?: number;
   tags?: string[];
   location?: string;
+  size?: ListingSize;
   cloudinaryUrl: string;
   publicId: string;
   autoTags?: string[];

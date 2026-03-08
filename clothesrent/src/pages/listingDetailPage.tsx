@@ -118,6 +118,14 @@ export default function ListingDetailPage() {
                     <h1 className="font-display ldp-title">{listing.title}</h1>
                     <p className="ldp-description">{listing.description}</p>
 
+                    {listing.size && (listing.size.letter || listing.size.waist || listing.size.shoe) && (
+                        <div className="ldp-sizes">
+                            {listing.size.letter && <span className="ldp-size-pill">Size {listing.size.letter}</span>}
+                            {listing.size.waist && <span className="ldp-size-pill">Waist {listing.size.waist}</span>}
+                            {listing.size.shoe && <span className="ldp-size-pill">Shoe {listing.size.shoe}</span>}
+                        </div>
+                    )}
+
                     {listing.location && (
                         <p className="ldp-location">📍 {listing.location}</p>
                     )}

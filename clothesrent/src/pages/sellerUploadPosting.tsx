@@ -17,6 +17,9 @@ type ListingDraft = {
   dailyRate: string;
   tags: string;
   location: string;
+  sizeLetter: string;
+  sizeWaist: string;
+  sizeShoe: string;
 };
 
 const INITIAL_DRAFT: ListingDraft = {
@@ -26,6 +29,9 @@ const INITIAL_DRAFT: ListingDraft = {
   dailyRate: "",
   tags: "",
   location: "",
+  sizeLetter: "",
+  sizeWaist: "",
+  sizeShoe: "",
 };
 
 type Step = "upload" | "transform" | "details";
@@ -161,8 +167,14 @@ export default function SellerUploadPosting() {
             .filter(Boolean)
         : [];
 
+      const sizeObj = {
+        letter: draft.sizeLetter || undefined,
+        waist: draft.sizeWaist || undefined,
+        shoe: draft.sizeShoe || undefined,
+      };
+      const hasSize = sizeObj.letter || sizeObj.waist || sizeObj.shoe;
+
       const result = await createListing({
-        // Creator display name must come from the user's profile name, not email/nickname.
         sellerName: loadUserProfile(user?.sub ?? "", {
           name: "",
           style: "",
@@ -175,12 +187,12 @@ export default function SellerUploadPosting() {
         dailyRate: draft.dailyRate ? parseFloat(draft.dailyRate) : undefined,
         tags: userTags,
         location: draft.location.trim(),
+        size: hasSize ? sizeObj : undefined,
         sellerId: user?.sub,
         cloudinaryUrl,
         publicId,
         autoTags,
         transformations: transforms,
-        
       });
 
       setSubmitMessage(
@@ -462,6 +474,51 @@ export default function SellerUploadPosting() {
                   setDraft((p) => ({ ...p, dailyRate: e.target.value }))
                 }
               />
+
+              <fieldset className="seller-size-fieldset">
+                <legend className="seller-field-label">Size — optional</legend>
+                <div className="seller-size-row">
+                  <div className="seller-size-col">
+                    <label htmlFor="size-letter" className="seller-size-label">Letter</label>
+                    <select
+                      id="size-letter"
+                      className="seller-field-input seller-size-select"
+                      value={draft.sizeLetter}
+                      onChange={(e) => setDraft((p) => ({ ...p, sizeLetter: e.target.value }))}>
+                      <option value="">—</option>
+                      {["XXS", "XS", "S", "M", "L", "XL", "XXL", "3XL"].map((s) => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="seller-size-col">
+                    <label htmlFor="size-waist" className="seller-size-label">Waist</label>
+                    <select
+                      id="size-waist"
+                      className="seller-field-input seller-size-select"
+                      value={draft.sizeWaist}
+                      onChange={(e) => setDraft((p) => ({ ...p, sizeWaist: e.target.value }))}>
+                      <option value="">—</option>
+                      {["26", "28", "29", "30", "31", "32", "33", "34", "36", "38", "40", "42"].map((s) => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="seller-size-col">
+                    <label htmlFor="size-shoe" className="seller-size-label">Shoe</label>
+                    <select
+                      id="size-shoe"
+                      className="seller-field-input seller-size-select"
+                      value={draft.sizeShoe}
+                      onChange={(e) => setDraft((p) => ({ ...p, sizeShoe: e.target.value }))}>
+                      <option value="">—</option>
+                      {["5", "5.5", "6", "6.5", "7", "7.5", "8", "8.5", "9", "9.5", "10", "10.5", "11", "11.5", "12", "13", "14"].map((s) => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </fieldset>
 
               <label htmlFor="listing-tags" className="seller-field-label">
                 Tags — comma separated, optional

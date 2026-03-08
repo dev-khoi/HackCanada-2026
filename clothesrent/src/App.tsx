@@ -77,7 +77,7 @@ function ListingCard({ listing }: { listing: Listing }) {
     : "";
 
   return (
-    <div className="product-card">
+    <a href={`/listing/${listing._id}`} className="product-card product-card-link">
       <div className="card-img-wrap">
         {displayUrl ? (
           <img src={displayUrl} alt={listing.title} className="card-img-inner" loading="lazy" />
@@ -85,14 +85,18 @@ function ListingCard({ listing }: { listing: Listing }) {
           <div className="card-img-inner">IMAGE</div>
         )}
         {badge && <span className="card-badge">{badge}</span>}
-        <div className="card-overlay">
-          <a href={`/listing/${listing._id}`} className="btn-primary quick-add">View</a>
-        </div>
       </div>
       <div className="card-body">
         <div>
           <div className="card-name">{listing.title}</div>
           <div className="card-cat">{listing.tags.slice(0, 2).join(" · ") || "Fashion"}</div>
+          {listing.size && (listing.size.letter || listing.size.waist || listing.size.shoe) && (
+            <div className="card-sizes">
+              {listing.size.letter && <span className="card-size-pill">{listing.size.letter}</span>}
+              {listing.size.waist && <span className="card-size-pill">W{listing.size.waist}</span>}
+              {listing.size.shoe && <span className="card-size-pill">US{listing.size.shoe}</span>}
+            </div>
+          )}
           <div className="card-availability">
             {listing.status === "Live" ? "Available" : listing.status}
           </div>
@@ -104,7 +108,7 @@ function ListingCard({ listing }: { listing: Listing }) {
           )}
         </div>
       </div>
-    </div>
+    </a>
   );
 }
 
@@ -524,6 +528,11 @@ function LandingPage({
   auth0Id: string;
 }) {
   const [styleSearchOpen, setStyleSearchOpen] = useState(false);
+
+  // Reset recommendations every time the user navigates back to Explore
+  useEffect(() => {
+    onClearRecommendations();
+  }, []);
 
   const handleRecommendations = (listings: Listing[]) => {
     onRecommendations(listings);

@@ -25,6 +25,17 @@ const UserItemSellSchema = new Schema<IUserItemSell>(
     publicId: { type: String, required: true, unique: true },
     tags: { type: [String], default: [] },
     bbLink: { type: String },
+    size: {
+      type: new Schema(
+        {
+          letter: { type: String },
+          waist: { type: String },
+          shoe: { type: String },
+        },
+        { _id: false }
+      ),
+      default: undefined,
+    },
     status: {
       type: String,
       enum: ["Draft", "Live", "Paused", "Sold"],

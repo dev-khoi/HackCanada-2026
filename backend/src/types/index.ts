@@ -18,6 +18,12 @@ export interface ImageTransformations {
   badgeColor: string;
 }
 
+export interface ListingSize {
+  letter?: string;
+  waist?: string;
+  shoe?: string;
+}
+
 export interface IUserItemSell extends Document {
   sellerId: string;
   sellerName: string;
@@ -30,6 +36,7 @@ export interface IUserItemSell extends Document {
   publicId: string;
   tags: string[];
   bbLink?: string;
+  size?: ListingSize;
   status: "Draft" | "Live" | "Paused" | "Sold";
   transformations: ImageTransformations;
   createdAt: Date;
@@ -56,6 +63,7 @@ export interface CreateListingBody {
   dailyRate: number;
   location?: string;
   tags?: string[];
+  size?: ListingSize;
   cloudinaryUrl?: string;
   publicId?: string;
   autoTags?: string[];

@@ -34,7 +34,7 @@
 }
 
 body {
-  background: linear-gradient(150deg, #faf9f6 0%, #f5f2ec 35%, #f8f5f0 70%, #faf7f4 100%);
+  background: #f9f8f5;
   background-attachment: fixed;
   color: var(--text-primary);
   font-family: "DM Sans", sans-serif;
@@ -43,45 +43,7 @@ body {
   min-height: 100vh;
 }
 
-/* Floating ambient orbs */
-#root::before,
-#root::after {
-  content: "";
-  position: fixed;
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 0;
-  filter: blur(90px);
-  opacity: 0.28;
-  animation: floatOrb 14s ease-in-out infinite alternate;
-}
-
-#root::before {
-  width: 500px;
-  height: 500px;
-  top: -100px;
-  left: -80px;
-  background: radial-gradient(circle, rgba(200, 195, 185, 0.35) 0%, rgba(245, 242, 235, 0) 70%);
-}
-
-#root::after {
-  width: 420px;
-  height: 420px;
-  bottom: -80px;
-  right: -80px;
-  background: radial-gradient(circle, rgba(220, 210, 195, 0.30) 0%, rgba(245, 242, 235, 0) 70%);
-  animation-delay: -7s;
-}
-
-@keyframes floatOrb {
-  from {
-    transform: translate(0, 0) scale(1);
-  }
-
-  to {
-    transform: translate(40px, 30px) scale(1.12);
-  }
-}
+/* Ambient orbs removed for uniform background */
 
 #root {
   width: 100%;
@@ -107,27 +69,27 @@ body {
 
 .navbar {
   position: fixed;
-  top: 10px;
+  top: 12px;
   left: 1.5rem;
   right: 1.5rem;
   z-index: 1200;
   padding: 0 2rem;
-  height: 56px;
+  height: 52px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(24px) saturate(160%);
   -webkit-backdrop-filter: blur(24px) saturate(160%);
-  border: 1px solid rgba(220, 218, 212, 0.5);
+  border: 1px solid rgba(220, 218, 212, 0.35);
   border-radius: 100px;
-  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
   transition: background 0.4s ease, box-shadow 0.4s ease;
 }
 
 .navbar.scrolled {
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
 .brand {
@@ -563,8 +525,11 @@ body {
   border-color: rgba(42, 37, 32, 0.2);
 }
 
-.product-card:hover .card-overlay {
-  opacity: 1;
+/* Make entire card a clickable link */
+.product-card-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
 }
 
 .product-card:hover .card-img-inner {
@@ -678,6 +643,25 @@ body {
   letter-spacing: 0.08em;
   color: var(--text-muted);
   text-transform: uppercase;
+}
+
+.card-sizes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.4rem;
+}
+
+.card-size-pill {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  background: var(--charcoal);
+  color: #fff;
+  border-radius: 6px;
+  font-family: "DM Sans", sans-serif;
 }
 
 .map-section {
@@ -2049,6 +2033,25 @@ footer {
   background: rgb(37 31 51 / 6%);
   border-radius: 3px;
   color: var(--warm-grey);
+  font-family: "DM Sans", sans-serif;
+}
+
+.ldp-sizes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+}
+
+.ldp-size-pill {
+  display: inline-block;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  background: var(--charcoal);
+  color: #fff;
+  border-radius: 8px;
   font-family: "DM Sans", sans-serif;
 }
 
