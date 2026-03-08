@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
-import { CircleMarker, MapContainer, Popup, TileLayer, useMap } from "react-leaflet";
+import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
+import L from "leaflet";
 import "./App.css";
 import ShopPage from "./pages/shopPage";
 import SellerUploadPosting from "./pages/sellerUploadPosting";
@@ -15,41 +16,21 @@ import {
   PROFILE_UPDATED_EVENT,
   type UserProfileData,
 } from "./utils/profileStorage";
-import { geocodeAddressToCoords } from "./utils/location";
+import { geocodeAddressToCoords, useUserLocation } from "./utils/location";
 import { onNavigate } from "./utils/navigate";
 import { fetchListings, fetchPublicUserProfile } from "./api/listings";
 import type { Listing } from "./types/listing";
 import { buildDisplayUrl } from "./utils/cloudinaryUrl";
+import StyleSearchModal from "./components/StyleSearchModal";
+import GatePage from "./pages/GatePage";
+import OnboardingPage from "./pages/OnboardingPage";
 
 const FOOTER_LINKS: Record<string, string[]> = {
   Navigate: ["Home", "Shop", "Profile", "Sign In"],
 };
 
-const NEARBY_RENTAL_SPOTS = [
-  {
-    id: 1,
-    name: "Downtown Wardrobe Hub",
-    lat: 43.6524,
-    lng: -79.3839,
-    eta: "12 min",
-  },
-  {
-    id: 2,
-    name: "Queen St Rental Closet",
-    lat: 43.6467,
-    lng: -79.3936,
-    eta: "8 min",
-  },
-  {
-    id: 3,
-    name: "Harbourfront Style Point",
-    lat: 43.6388,
-    lng: -79.3817,
-    eta: "15 min",
-  },
-];
-
 const DEFAULT_MAP_CENTER: [number, number] = [43.6518, -79.3832];
+
 
 function MapRecenter({ center }: { center: [number, number] }) {
   const map = useMap();
@@ -76,7 +57,7 @@ function ListingCard({ listing }: { listing: Listing }) {
     : "";
 
   return (
-    <div className="product-card">
+    <a href={`/listing/${listing._id}`} className="product-card product-card-link">
       <div className="card-img-wrap">
         {displayUrl ? (
           <img src={displayUrl} alt={listing.title} className="card-img-inner" loading="lazy" />
@@ -84,14 +65,18 @@ function ListingCard({ listing }: { listing: Listing }) {
           <div className="card-img-inner">IMAGE</div>
         )}
         {badge && <span className="card-badge">{badge}</span>}
-        <div className="card-overlay">
-          <a href={`/listing/${listing._id}`} className="btn-primary quick-add">View</a>
-        </div>
       </div>
       <div className="card-body">
         <div>
           <div className="card-name">{listing.title}</div>
           <div className="card-cat">{listing.tags.slice(0, 2).join(" · ") || "Fashion"}</div>
+          {listing.size && (listing.size.letter || listing.size.waist || listing.size.shoe) && (
+            <div className="card-sizes">
+              {listing.size.letter && <span className="card-size-pill">{listing.size.letter}</span>}
+              {listing.size.waist && <span className="card-size-pill">W{listing.size.waist}</span>}
+              {listing.size.shoe && <span className="card-size-pill">US{listing.size.shoe}</span>}
+            </div>
+          )}
           <div className="card-availability">
             {listing.status === "Live" ? "Available" : listing.status}
           </div>
@@ -103,26 +88,22 @@ function ListingCard({ listing }: { listing: Listing }) {
           )}
         </div>
       </div>
-    </div>
+    </a>
   );
 }
 
 function ProductShowcase({
   recommendations,
   onClearRecommendations,
+  dbListings,
 }: {
   recommendations: Listing[];
   onClearRecommendations: () => void;
+  dbListings: Listing[];
 }) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
-  const [dbListings, setDbListings] = useState<Listing[]>([]);
-
-  useEffect(() => {
-    fetchListings("Live")
-      .then((data) => setDbListings(data))
-      .catch(() => { });
-  }, []);
+  const isPaused = useRef(false);
 
   const hasRecommendations = recommendations.length > 0;
   const displayListings = hasRecommendations ? recommendations : dbListings;
@@ -139,7 +120,7 @@ function ProductShowcase({
     const speed = 0.45;
 
     const tick = () => {
-      if (!isHovered) {
+      if (!isHovered && !isPaused.current) {
         viewport.scrollLeft += speed;
         const halfWidth = viewport.scrollWidth / 2;
         if (viewport.scrollLeft >= halfWidth) {
@@ -158,8 +139,41 @@ function ProductShowcase({
     const viewport = viewportRef.current;
     if (!viewport) return;
 
+    // Pause auto-scroll so it doesn't fight the manual scroll
+    isPaused.current = true;
+
     const cardStep = 324;
-    viewport.scrollBy({ left: direction * cardStep, behavior: "smooth" });
+    const target = viewport.scrollLeft + direction * cardStep;
+    const halfWidth = viewport.scrollWidth / 2;
+
+    // Animate manually over 400ms
+    const start = viewport.scrollLeft;
+    const startTime = performance.now();
+    const duration = 400;
+
+    const animate = (now: number) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      // Ease out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      viewport.scrollLeft = start + (target - start) * eased;
+
+      // Wrap around for infinite loop
+      if (viewport.scrollLeft >= halfWidth) {
+        viewport.scrollLeft -= halfWidth;
+      } else if (viewport.scrollLeft < 0) {
+        viewport.scrollLeft += halfWidth;
+      }
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        // Resume auto-scroll after animation
+        isPaused.current = false;
+      }
+    };
+
+    requestAnimationFrame(animate);
   };
 
   return (
@@ -235,14 +249,64 @@ function ProductShowcase({
   );
 }
 
-function NearbyMapSection() {
+interface ListingPin {
+  id: string;
+  title: string;
+  price: number;
+  dailyRate: number;
+  lat: number;
+  lng: number;
+  href: string;
+  imgUrl: string;
+}
+
+function NearbyMapSection({ listings }: { listings: Listing[] }) {
   const { user } = useAuth0();
+  const gpsCoords = useUserLocation(); // browser GPS – highest priority center
   const [userMapSpot, setUserMapSpot] = useState<{
     name: string;
     address: string;
     lat: number;
     lng: number;
   } | null>(null);
+  const [listingPins, setListingPins] = useState<ListingPin[]>([]);
+
+  // Geocode listing addresses
+  useEffect(() => {
+    if (!listings.length) return;
+    let cancelled = false;
+    const geocodeCache = new Map<string, { lat: number; lng: number } | null>();
+
+    const geocodeAll = async () => {
+      const pins: ListingPin[] = [];
+      for (const l of listings) {
+        if (!l.location?.trim()) continue;
+        let coords = geocodeCache.get(l.location);
+        if (coords === undefined) {
+          const result = await geocodeAddressToCoords(l.location);
+          coords = result ?? null;
+          geocodeCache.set(l.location, coords);
+        }
+        if (cancelled || !coords) continue;
+        pins.push({
+          id: l._id,
+          title: l.title,
+          price: l.price,
+          dailyRate: l.dailyRate,
+          lat: coords.lat,
+          lng: coords.lng,
+          href: `/listing/${l._id}`,
+          imgUrl: l.cloudinaryUrl
+            ? buildDisplayUrl(l.cloudinaryUrl, { width: 160, height: 160, removeBg: false })
+            : "",
+        });
+      }
+      if (!cancelled) setListingPins(pins);
+    };
+
+    geocodeAll();
+    return () => { cancelled = true; };
+  }, [listings]);
 
   useEffect(() => {
     let cancelled = false;
@@ -307,14 +371,17 @@ function NearbyMapSection() {
           fallback to Toronto center otherwise.
         */}
         {(() => {
-          const center: [number, number] = userMapSpot
-            ? [userMapSpot.lat, userMapSpot.lng]
-            : DEFAULT_MAP_CENTER;
+          // Priority: 1. browser GPS  2. profile location  3. Toronto fallback
+          const center: [number, number] = gpsCoords
+            ? [gpsCoords.lat, gpsCoords.lng]
+            : userMapSpot
+              ? [userMapSpot.lat, userMapSpot.lng]
+              : DEFAULT_MAP_CENTER;
 
           return (
             <MapContainer
               center={center}
-              zoom={13}
+              zoom={11}
               scrollWheelZoom={false}
               className="leaflet-map">
               <MapRecenter center={center} />
@@ -322,42 +389,65 @@ function NearbyMapSection() {
                 attribution="&copy; OpenStreetMap contributors"
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
-              {NEARBY_RENTAL_SPOTS.map((spot) => (
-                <CircleMarker
-                  key={spot.id}
-                  center={[spot.lat, spot.lng]}
-                  radius={9}
-                  pathOptions={{
-                    color: "#251f33",
-                    fillColor: "#b5afa8",
-                    fillOpacity: 0.95,
-                    weight: 2,
-                  }}>
-                  <Popup>
-                    <strong>{spot.name}</strong>
-                    <br />
-                    Pickup ETA: {spot.eta}
-                  </Popup>
-                </CircleMarker>
-              ))}
-              {userMapSpot && (
-                <CircleMarker
-                  key={`profile-marker-${userMapSpot.lat}-${userMapSpot.lng}`}
-                  center={[userMapSpot.lat, userMapSpot.lng]}
-                  radius={12}
-                  pathOptions={{
-                    color: "#0f172a",
-                    fillColor: "#38bdf8",
-                    fillOpacity: 0.95,
-                    weight: 2,
-                  }}>
-                  <Popup>
-                    <strong>{userMapSpot.name} (You)</strong>
-                    <br />
-                    {userMapSpot.address}
-                  </Popup>
-                </CircleMarker>
-              )}
+              {listingPins.map((pin) => {
+                const icon = L.divIcon({
+                  className: "",
+                  html: `<div class="listing-marker-wrap"><div class="listing-marker">${pin.imgUrl ? `<img src="${pin.imgUrl}" alt="" loading="lazy" />` : `<span class="listing-marker-dot"></span>`
+                    }</div></div>`,
+                  iconSize: [80, 80],
+                  iconAnchor: [40, 40],
+                  popupAnchor: [0, -42],
+                });
+                return (
+                  <Marker key={pin.id} position={[pin.lat, pin.lng]} icon={icon}>
+                    <Popup className="map-popup">
+                      <strong>{pin.title}</strong>
+                      {pin.dailyRate > 0 && <span className="map-popup-meta">${pin.dailyRate}/day &middot; </span>}
+                      <span className="map-popup-meta">${pin.price} buy</span>
+                      <a href={pin.href} className="map-popup-link">View &rarr;</a>
+                    </Popup>
+                  </Marker>
+                );
+              })}
+
+              {/* GPS "You are here" pin */}
+              {gpsCoords && (() => {
+                const youIcon = L.divIcon({
+                  className: "",
+                  html: `<div class="you-marker-wrap"><div class="you-marker"><div class="you-marker-pulse"></div><span>You</span></div></div>`,
+                  iconSize: [80, 80],
+                  iconAnchor: [40, 40],
+                  popupAnchor: [0, -42],
+                });
+                return (
+                  <Marker position={[gpsCoords.lat, gpsCoords.lng]} icon={youIcon}>
+                    <Popup className="map-popup"><strong>You are here</strong></Popup>
+                  </Marker>
+                );
+              })()}
+
+              {/* Profile location pin (if different from GPS) */}
+              {userMapSpot && (() => {
+                const profileIcon = L.divIcon({
+                  className: "",
+                  html: `<div class="you-marker-wrap"><div class="you-marker you-marker--profile"><span>🏠</span></div></div>`,
+                  iconSize: [80, 80],
+                  iconAnchor: [40, 40],
+                  popupAnchor: [0, -42],
+                });
+                return (
+                  <Marker
+                    key={`profile-${userMapSpot.lat}-${userMapSpot.lng}`}
+                    position={[userMapSpot.lat, userMapSpot.lng]}
+                    icon={profileIcon}>
+                    <Popup className="map-popup">
+                      <strong>{userMapSpot.name}</strong>
+                      <span className="map-popup-meta">{userMapSpot.address}</span>
+                    </Popup>
+                  </Marker>
+                );
+              })()}
+
             </MapContainer>
           );
         })()}
@@ -379,7 +469,7 @@ function Footer() {
     <footer>
       <div className="footer-grid">
         <div>
-          <div className="footer-brand">MAISON ORE</div>
+          <div className="footer-brand">PFIFFLE</div>
           <div className="footer-tagline">Crafted for the considered.</div>
           <p className="footer-copy">
             A slow-fashion label rooted in timeless design, responsible
@@ -407,7 +497,7 @@ function Footer() {
       </div>
 
       <div className="footer-bottom">
-        <span>(c) 2025 Maison Ore. All rights reserved.</span>
+        <span>(c) 2025 Pfiffle. All rights reserved.</span>
         <div className="footer-bottom-links">
           <a href="#" className="footer-link footer-inline-link">
             Privacy
@@ -487,7 +577,7 @@ function SignInPage() {
         <a href="/" className="auth-home-link">
           Back to Home
         </a>
-        <p className="auth-subtitle">Maison Ore Account</p>
+        <p className="auth-subtitle">Pfiffle Account</p>
         <h1 className="font-display auth-title">Sign In</h1>
         {error && <p className="auth-error">Error: {error.message}</p>}
         <div className="auth-actions">
@@ -514,11 +604,27 @@ function SignInPage() {
 function LandingPage({
   recommendations,
   onClearRecommendations,
+  onRecommendations,
+  auth0Id,
 }: {
   recommendations: Listing[];
   onClearRecommendations: () => void;
+  onRecommendations: (listings: Listing[]) => void;
+  auth0Id: string;
 }) {
   const [styleSearchOpen, setStyleSearchOpen] = useState(false);
+  const [dbListings, setDbListings] = useState<Listing[]>([]);
+
+  useEffect(() => {
+    fetchListings("Live")
+      .then((data) => setDbListings(data))
+      .catch(() => { });
+  }, []);
+
+  // Reset recommendations every time the user navigates back to Explore
+  useEffect(() => {
+    onClearRecommendations();
+  }, []);
 
   const handleRecommendations = (listings: Listing[]) => {
     onRecommendations(listings);
@@ -528,14 +634,27 @@ function LandingPage({
   return (
     <>
       <main>
+        <button
+          type="button"
+          className="style-search-floating"
+          onClick={() => setStyleSearchOpen(true)}>
+          &#9733; Style Search
+        </button>
         <ProductShowcase
           recommendations={recommendations}
           onClearRecommendations={onClearRecommendations}
+          dbListings={dbListings}
         />
-        <NearbyMapSection />
+        <NearbyMapSection listings={dbListings} />
         <div className="divider" />
       </main>
       <Footer />
+      <StyleSearchModal
+        isOpen={styleSearchOpen}
+        onClose={() => setStyleSearchOpen(false)}
+        auth0Id={auth0Id}
+        onRecommendations={handleRecommendations}
+      />
     </>
   );
 }
@@ -543,9 +662,11 @@ function LandingPage({
 export default function App({
   recommendations = [],
   onClearRecommendations = () => { },
+  onRecommendations = () => { },
 }: {
   recommendations?: Listing[];
   onClearRecommendations?: () => void;
+  onRecommendations?: (listings: Listing[]) => void;
 }) {
   const { isAuthenticated, isLoading, user } = useAuth0();
   const [path, setPath] = useState(window.location.pathname);
@@ -558,6 +679,7 @@ export default function App({
   const profileUserId = profileMatch ? decodeURIComponent(profileMatch[1]) : null;
   const [isCheckingRequiredProfile, setIsCheckingRequiredProfile] = useState(true);
   const [mustSetProfileName, setMustSetProfileName] = useState(false);
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -572,11 +694,15 @@ export default function App({
       try {
         const publicProfile = await fetchPublicUserProfile(user.sub);
         if (!cancelled) {
-          setMustSetProfileName(!publicProfile.name.trim());
+          const noName = !publicProfile.name.trim();
+          setMustSetProfileName(noName);
+          setNeedsOnboarding(noName);
         }
       } catch {
         if (!cancelled) {
-          setMustSetProfileName(false);
+          // New user — profile doesn't exist yet, trigger onboarding
+          setMustSetProfileName(true);
+          setNeedsOnboarding(true);
         }
       } finally {
         if (!cancelled) {
@@ -598,18 +724,45 @@ export default function App({
   );
 
 
+  // Show gate landing page for unauthenticated users at root (after Auth0 finishes loading)
+  if (!isLoading && !isAuthenticated && path === "/") {
+    return <GatePage />;
+  }
+
   // Redirect unauthenticated users away from protected routes (only after Auth0 has finished loading)
   if (!isLoading && !isAuthenticated && isAccessingProtectedRoute) {
     return <SignInPage />;
   }
 
-  // Only redirect to profile AFTER check completes (no blocking loading screen)
-  if (isAuthenticated && !isCheckingRequiredProfile && mustSetProfileName && !path.startsWith("/profile")) {
-    return <ProfilePage requireName />;
+  // Show onboarding for new users who haven't set up their profile yet
+  if (isAuthenticated && !isCheckingRequiredProfile && needsOnboarding && !path.startsWith("/profile")) {
+    return (
+      <OnboardingPage
+        onComplete={() => {
+          setNeedsOnboarding(false);
+          setMustSetProfileName(false);
+          window.history.replaceState({}, "", "/");
+          setPath("/");
+        }}
+      />
+    );
   }
 
   if (path === "/signin") {
     return <SignInPage />;
+  }
+
+  if (path === "/onboarding") {
+    return (
+      <OnboardingPage
+        onComplete={() => {
+          setNeedsOnboarding(false);
+          setMustSetProfileName(false);
+          window.history.replaceState({}, "", "/");
+          setPath("/");
+        }}
+      />
+    );
   }
 
   if (path === "/shop/new-listing") {
@@ -648,5 +801,5 @@ export default function App({
     return <SavesPage />;
   }
 
-  return <LandingPage recommendations={recommendations} onClearRecommendations={onClearRecommendations} />;
+  return <LandingPage recommendations={recommendations} onClearRecommendations={onClearRecommendations} onRecommendations={onRecommendations} auth0Id={user?.sub ?? ""} />;
 }

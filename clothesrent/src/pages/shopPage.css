@@ -18,6 +18,7 @@
   border: 1px solid rgb(37 31 51 / 10%);
   box-shadow: 0 14px 30px rgb(37 31 51 / 8%);
   padding: 1.25rem;
+  border-radius: 16px;
 }
 
 .shop-sidebar-label {
@@ -94,7 +95,7 @@
 
 .shop-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 280px));
+  grid-template-columns: repeat(4, 1fr);
   gap: 0.9rem;
 }
 
@@ -102,6 +103,36 @@
   border: 1px solid rgb(37 31 51 / 12%);
   background: #fff;
   padding: 0.95rem;
+  border-radius: 16px;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.shop-card-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.shop-card-link:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgb(37 31 51 / 12%);
+}
+
+.shop-card-clickable {
+  position: relative;
+}
+
+.shop-card-stretch-link {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: 16px;
+}
+
+.shop-card-clickable>*:not(.shop-card-stretch-link) {
+  position: relative;
+  z-index: 2;
 }
 
 .shop-card-top {
@@ -112,7 +143,7 @@
 }
 
 .shop-card-title {
-  font-family: "Cormorant Garamond", serif;
+  font-family: "Bebas Neue", sans-serif;
   color: var(--ink);
   font-weight: 400;
   font-size: 1.15rem;
@@ -142,10 +173,12 @@
   color: var(--ink);
   text-decoration: underline;
   text-underline-offset: 2px;
+  position: relative;
+  z-index: 3;
 }
 
 .shop-card-user-link:hover {
-  color: #166052;
+  color: var(--charcoal);
 }
 
 .shop-pill {
@@ -155,13 +188,14 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
   border: 1px solid transparent;
+  border-radius: 8px;
 }
 
 .shop-pill-live,
 .shop-pill-completed {
-  background: rgb(125 214 193 / 22%);
-  color: #166052;
-  border-color: rgb(125 214 193 / 48%);
+  background: rgb(42 37 32 / 10%);
+  color: var(--ink);
+  border-color: rgb(42 37 32 / 20%);
 }
 
 .shop-pill-draft,
@@ -176,6 +210,7 @@
 .shop-table-wrap {
   overflow-x: auto;
   border: 1px solid rgb(37 31 51 / 10%);
+  border-radius: 12px;
 }
 
 .shop-table {
@@ -222,6 +257,7 @@
   overflow: hidden;
   margin-bottom: 0.7rem;
   background: rgb(237 232 223 / 40%);
+  border-radius: 12px;
 }
 
 .shop-card-img {
@@ -232,6 +268,24 @@
 }
 
 /* Tags */
+.shop-card-sizes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.4rem;
+}
+
+.shop-size-pill {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  background: var(--charcoal);
+  color: #fff;
+  border-radius: 6px;
+}
+
 .shop-card-tags {
   display: flex;
   flex-wrap: wrap;
@@ -248,6 +302,7 @@
   background: rgb(37 31 51 / 6%);
   color: var(--ink);
   border: 1px solid rgb(37 31 51 / 12%);
+  border-radius: 6px;
 }
 
 /* Daily rate helper */
@@ -264,9 +319,10 @@
 }
 
 .shop-action-btn {
-  font-size: 0.64rem;
-  padding: 0.5rem 0.8rem;
+  font-size: 0.72rem;
+  padding: 0.5rem 1rem;
   cursor: pointer;
+  border-radius: 10px;
 }
 
 .shop-action-btn-danger {
@@ -302,6 +358,7 @@
   background: #fff;
   color: var(--ink);
   outline: none;
+  border-radius: 12px;
 }
 
 .shop-search-input:focus {
@@ -342,6 +399,7 @@
   font-size: 0.75rem;
   padding: 0.45rem 0.55rem;
   min-width: 120px;
+  border-radius: 10px;
 }
 
 .shop-filter-toggle {
@@ -353,6 +411,7 @@
   border: 1px solid rgb(37 31 51 / 16%);
   background: #fff;
   padding: 0.45rem 0.6rem;
+  border-radius: 10px;
 }
 
 /* Transaction table images — see consolidated rule below */
@@ -411,7 +470,7 @@
   height: 48px;
   object-fit: cover;
   border: 1px solid rgb(37 31 51 / 10%);
-  border-radius: 2px;
+  border-radius: 8px;
 }
 
 .personalize-panel {
@@ -433,7 +492,7 @@
 }
 
 .personalize-uploader-title {
-  font-family: "Cormorant Garamond", serif;
+  font-family: "Bebas Neue", sans-serif;
   font-size: 1.2rem;
   color: var(--ink);
 }

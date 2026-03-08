@@ -210,7 +210,7 @@ Three-step interactive listing creator with live AI transformation preview:
 ### 5. Profile (`/profile`)
 
 - Protected page for authenticated users
-- Displays profile picture, name, style, and location (with type-ahead suggestions (address, postal code, city, country))
+- Displays profile picture, name, style, and location (with type-ahead suggestions (address, postal code, city, country), backed by `/api/location/suggest` for better reliability)
 - "Use Current Location" button asks browser permission and reverse-fills the address
 - Profile picture can be changed via local image upload
 - Name/style and custom picture are saved in local storage per Auth0 user
@@ -499,3 +499,11 @@ Grid cards are capped at `max-width: 320px` with `auto-fill` layout (no stretchi
 
 
 
+
+
+
+## Update (March 8, 2026)
+
+- Restored Thrift Out seller display so each item shows `Listed by` under location using seller profile names.
+- Seller names on Thrift Out cards now link to `/profile/:auth0Id`.
+- Listing detail `Listed by` now displays seller profile name (fallback: seller id) instead of truncated Auth0 ID.

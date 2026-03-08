@@ -17,6 +17,9 @@ type ListingDraft = {
   dailyRate: string;
   tags: string;
   location: string;
+  sizeLetter: string;
+  sizeWaist: string;
+  sizeShoe: string;
 };
 
 const INITIAL_DRAFT: ListingDraft = {
@@ -26,6 +29,9 @@ const INITIAL_DRAFT: ListingDraft = {
   dailyRate: "",
   tags: "",
   location: "",
+  sizeLetter: "",
+  sizeWaist: "",
+  sizeShoe: "",
 };
 
 type Step = "upload" | "transform" | "details";
@@ -102,9 +108,9 @@ export default function SellerUploadPosting() {
   const allTagsPreview = useMemo(() => {
     const userTags = draft.tags.trim()
       ? draft.tags
-          .split(",")
-          .map((t) => t.trim())
-          .filter(Boolean)
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean)
       : [];
     return [...new Set([...autoTags, ...userTags])];
   }, [autoTags, draft.tags]);
@@ -156,13 +162,19 @@ export default function SellerUploadPosting() {
     try {
       const userTags = draft.tags.trim()
         ? draft.tags
-            .split(",")
-            .map((t) => t.trim())
-            .filter(Boolean)
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean)
         : [];
 
+      const sizeObj = {
+        letter: draft.sizeLetter || undefined,
+        waist: draft.sizeWaist || undefined,
+        shoe: draft.sizeShoe || undefined,
+      };
+      const hasSize = sizeObj.letter || sizeObj.waist || sizeObj.shoe;
+
       const result = await createListing({
-        // Creator display name must come from the user's profile name, not email/nickname.
         sellerName: loadUserProfile(user?.sub ?? "", {
           name: "",
           style: "",
@@ -175,12 +187,12 @@ export default function SellerUploadPosting() {
         dailyRate: draft.dailyRate ? parseFloat(draft.dailyRate) : undefined,
         tags: userTags,
         location: draft.location.trim(),
+        size: hasSize ? sizeObj : undefined,
         sellerId: user?.sub,
         cloudinaryUrl,
         publicId,
         autoTags,
         transformations: transforms,
-        
       });
 
       setSubmitMessage(
@@ -254,12 +266,11 @@ export default function SellerUploadPosting() {
           {steps.map((s) => (
             <div
               key={s.key}
-              className={`seller-step${step === s.key ? " seller-step--active" : ""}${
-                steps.findIndex((x) => x.key === step) >
-                steps.findIndex((x) => x.key === s.key)
+              className={`seller-step${step === s.key ? " seller-step--active" : ""}${steps.findIndex((x) => x.key === step) >
+                  steps.findIndex((x) => x.key === s.key)
                   ? " seller-step--done"
                   : ""
-              }`}>
+                }`}>
               {s.label}
             </div>
           ))}
@@ -269,7 +280,11 @@ export default function SellerUploadPosting() {
         {step === "upload" && (
           <div className="seller-posting-grid">
             <section className="seller-preview-panel">
-              <div className="seller-preview-box">
+              <div
+                className="seller-preview-box"
+                onClick={() => !selectedFile && fileInputRef.current?.click()}
+                style={{ cursor: selectedFile ? "default" : "pointer" }}
+              >
                 {localPreviewUrl ? (
                   <img
                     src={localPreviewUrl}
@@ -278,7 +293,15 @@ export default function SellerUploadPosting() {
                   />
                 ) : (
                   <div className="seller-preview-placeholder">
-                    No photo selected yet
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#8a7f96" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: 8 }}>
+                      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                      <polyline points="17 8 12 3 7 8" />
+                      <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
+                    <br />
+                    Click to browse photos
+                    <br />
+                    <span style={{ fontSize: "0.72rem", opacity: 0.7 }}>JPG, PNG, or WebP</span>
                   </div>
                 )}
               </div>
@@ -290,33 +313,39 @@ export default function SellerUploadPosting() {
                 onChange={handleFileSelect}
                 style={{ display: "none" }}
               />
-              <button
-                type="button"
-                className="btn-primary"
-                style={{ marginTop: "0.75rem" }}
-                onClick={() => fileInputRef.current?.click()}>
-                {selectedFile ? "Replace Photo" : "Upload Garment Photo"}
-              </button>
+
+              {selectedFile ? (
+                <button
+                  type="button"
+                  className="btn-outline"
+                  style={{ width: "100%", marginTop: "0.5rem" }}
+                  onClick={() => fileInputRef.current?.click()}>
+                  Replace Photo
+                </button>
+              ) : null}
+
               {selectedFile && (
-                <p className="shop-card-meta" style={{ marginTop: "0.4rem" }}>
+                <p className="seller-location-hint" style={{ marginTop: "0.35rem", textAlign: "center" }}>
                   {selectedFile.name}
                 </p>
               )}
             </section>
 
             <div className="seller-upload-action-panel">
-              <h3 className="transform-panel-title">Step 1: Upload Image</h3>
+              <h3 className="transform-panel-title">Upload Your Garment</h3>
               <p className="transform-panel-subtitle">
-                Select a garment photo (JPG, PNG, or WebP), then upload it to
-                Cloudinary. The image will be auto-tagged by AI.
+                Select a photo of your garment, then upload it to Cloudinary. Our AI will automatically tag and categorize it for you.
               </p>
+
               <button
                 type="button"
                 className="btn-primary seller-submit-btn"
                 disabled={!selectedFile || uploading}
-                onClick={handleUpload}>
-                {uploading ? "Uploading..." : "Upload to Cloudinary"}
+                onClick={handleUpload}
+                style={{ fontSize: "1rem", padding: "1rem 1.5rem" }}>
+                {uploading ? "Uploading..." : selectedFile ? "Upload to Cloudinary →" : "Select a Photo First"}
               </button>
+
               {uploadProgress && (
                 <p className="seller-submit-message">{uploadProgress}</p>
               )}
@@ -462,6 +491,51 @@ export default function SellerUploadPosting() {
                   setDraft((p) => ({ ...p, dailyRate: e.target.value }))
                 }
               />
+
+              <fieldset className="seller-size-fieldset">
+                <legend className="seller-field-label">Size — optional</legend>
+                <div className="seller-size-row">
+                  <div className="seller-size-col">
+                    <label htmlFor="size-letter" className="seller-size-label">Letter</label>
+                    <select
+                      id="size-letter"
+                      className="seller-field-input seller-size-select"
+                      value={draft.sizeLetter}
+                      onChange={(e) => setDraft((p) => ({ ...p, sizeLetter: e.target.value }))}>
+                      <option value="">—</option>
+                      {["XXS", "XS", "S", "M", "L", "XL", "XXL", "3XL"].map((s) => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="seller-size-col">
+                    <label htmlFor="size-waist" className="seller-size-label">Waist</label>
+                    <select
+                      id="size-waist"
+                      className="seller-field-input seller-size-select"
+                      value={draft.sizeWaist}
+                      onChange={(e) => setDraft((p) => ({ ...p, sizeWaist: e.target.value }))}>
+                      <option value="">—</option>
+                      {["26", "28", "29", "30", "31", "32", "33", "34", "36", "38", "40", "42"].map((s) => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="seller-size-col">
+                    <label htmlFor="size-shoe" className="seller-size-label">Shoe</label>
+                    <select
+                      id="size-shoe"
+                      className="seller-field-input seller-size-select"
+                      value={draft.sizeShoe}
+                      onChange={(e) => setDraft((p) => ({ ...p, sizeShoe: e.target.value }))}>
+                      <option value="">—</option>
+                      {["5", "5.5", "6", "6.5", "7", "7.5", "8", "8.5", "9", "9.5", "10", "10.5", "11", "11.5", "12", "13", "14"].map((s) => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </fieldset>
 
               <label htmlFor="listing-tags" className="seller-field-label">
                 Tags — comma separated, optional

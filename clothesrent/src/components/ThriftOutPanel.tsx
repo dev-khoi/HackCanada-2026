@@ -7,7 +7,7 @@ import type { Listing } from "../types/listing";
 import { buildDisplayUrl } from "../utils/cloudinaryUrl";
 import { loadUserProfile, type UserProfileData } from "../utils/profileStorage";
 import { geocodeAddressToCoords } from "../utils/location";
-import { useCart } from "../context/CartContext";
+
 
 interface Props {
   userId: string;
@@ -45,8 +45,6 @@ export default function ThriftOutPanel({ userId }: Props) {
   const [locationCoords, setLocationCoords] = useState<
     Record<string, { lat: number; lng: number } | null>
   >({});
-  const { addToCart, isInCart } = useCart();
-
   const loadLive = async () => {
     setLoading(true);
     setError(null);
@@ -162,6 +160,7 @@ export default function ThriftOutPanel({ userId }: Props) {
     const radius = Number(radiusKm);
 
     return items.filter((item) => {
+      if (userId && item.sellerId === userId) return false;
       if (min != null && Number.isFinite(min) && item.price < min) return false;
       if (max != null && Number.isFinite(max) && item.price > max) return false;
 
@@ -288,7 +287,6 @@ export default function ThriftOutPanel({ userId }: Props) {
 
       <div className="shop-grid">
         {filteredItems.map((item) => {
-          const isOwn = userId && item.sellerId === userId;
           const badge = item.transformations?.badge || getBadge(item);
           const t = item.transformations;
           const itemCoords = item.location?.trim()
@@ -309,8 +307,18 @@ export default function ThriftOutPanel({ userId }: Props) {
             })
             : "";
 
+          const sellerDisplayName = item.sellerName?.trim() || "Anonymous";
+          const sellerProfileHref = item.sellerId?.trim()
+            ? `/profile/${encodeURIComponent(item.sellerId.trim())}`
+            : "";
+
           return (
-            <article key={item._id} className="shop-card">
+            <article key={item._id} className="shop-card shop-card-link shop-card-clickable">
+              <a
+                href={`/listing/${item._id}`}
+                className="shop-card-stretch-link"
+                aria-label={`View listing: ${item.title}`}
+              />
               {displayUrl && (
                 <div className="shop-card-img-wrap">
                   <img
@@ -328,20 +336,25 @@ export default function ThriftOutPanel({ userId }: Props) {
               )}
               <p className="shop-card-meta shop-card-location">
                 Listed by:{" "}
-                {item.sellerId ? (
-                  <a
-                    className="shop-card-user-link"
-                    href={`/profile/${encodeURIComponent(item.sellerId)}`}>
-                    {item.sellerName?.trim() || item.sellerId}
+                {sellerProfileHref ? (
+                  <a className="shop-card-user-link" href={sellerProfileHref}>
+                    {sellerDisplayName}
                   </a>
                 ) : (
-                  "Unknown seller"
+                  sellerDisplayName
                 )}
               </p>
               {itemDistance != null && (
                 <p className="shop-card-meta shop-card-location">
                   Distance: {itemDistance.toFixed(1)} km
                 </p>
+              )}
+              {item.size && (item.size.letter || item.size.waist || item.size.shoe) && (
+                <div className="shop-card-sizes">
+                  {item.size.letter && <span className="shop-size-pill">{item.size.letter}</span>}
+                  {item.size.waist && <span className="shop-size-pill">W{item.size.waist}</span>}
+                  {item.size.shoe && <span className="shop-size-pill">US{item.size.shoe}</span>}
+                </div>
               )}
               <p className="shop-card-rate">
                 ${item.price}
@@ -360,26 +373,6 @@ export default function ThriftOutPanel({ userId }: Props) {
                   ))}
                 </div>
               )}
-              <div className="shop-card-actions">
-                {isOwn ? (
-                  <span className="shop-pill shop-pill-own">Your listing</span>
-                ) : (
-                  <>
-                    <a
-                      href={`/listing/${item._id}`}
-                      className="btn-primary shop-action-btn">
-                      View
-                    </a>
-                    <button
-                      type="button"
-                      className="btn-outline shop-action-btn"
-                      disabled={isInCart(item._id)}
-                      onClick={() => addToCart(item, "buy")}>
-                      {isInCart(item._id) ? "In Cart" : "+ Cart"}
-                    </button>
-                  </>
-                )}
-              </div>
             </article>
           );
         })}

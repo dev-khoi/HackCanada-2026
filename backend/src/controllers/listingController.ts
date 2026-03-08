@@ -80,6 +80,7 @@ export const createListing = async (req: Request, res: Response) => {
       publicId: preUploadedPublicId,
       autoTags,
       transformations,
+      size,
     } = req.body as CreateListingBody;
 
     if (!title || !description || price == null || !location?.trim()) {
@@ -145,6 +146,7 @@ export const createListing = async (req: Request, res: Response) => {
       publicId,
       tags: mergedTags,
       bbLink: bbLink || undefined,
+      size: size && (size.letter || size.waist || size.shoe) ? size : undefined,
       status: "Live",
       transformations: transformations ?? {
         removeBg: false,

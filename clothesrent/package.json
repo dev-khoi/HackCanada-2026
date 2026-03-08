@@ -13,6 +13,7 @@
     "@auth0/auth0-react": "^2.15.0",
     "@cloudinary/react": "^1.14.4",
     "@cloudinary/url-gen": "^1.22.0",
+    "framer-motion": "^12.35.1",
     "gsap": "^3.14.2",
     "leaflet": "^1.9.4",
     "react": "^19.2.0",

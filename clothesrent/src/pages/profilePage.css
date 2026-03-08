@@ -72,7 +72,7 @@
   border: 1px solid rgb(28 28 28 / 12%);
   background: rgb(255 255 255 / 65%);
   color: var(--ink);
-  font-family: "Jost", sans-serif;
+  font-family: "DM Sans", sans-serif;
   font-size: 0.92rem;
   padding: 0.72rem 0.8rem;
 }
@@ -95,7 +95,7 @@
 
 .profile-saved {
   font-size: 0.8rem;
-  color: var(--accent-deep);
+  color: var(--charcoal);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }

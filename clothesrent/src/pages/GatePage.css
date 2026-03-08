@@ -1,0 +1,437 @@
+/* ── Root ── */
+.gate-root {
+  min-height: 100vh;
+  background: #f9f8f5;
+  color: #251f33;
+  font-family: "DM Sans", sans-serif;
+  overflow-x: hidden;
+}
+
+/* ── Nav ── */
+.gate-nav {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 2.5rem;
+  background: transparent;
+}
+
+.gate-nav-brand {
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 1.35rem;
+  letter-spacing: 0.12em;
+  color: #251f33;
+}
+
+.gate-nav-actions {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+/* ── Buttons ── */
+.gate-btn {
+  font-family: "DM Sans", sans-serif;
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  border-radius: 100px;
+  padding: 0.6rem 1.4rem;
+  cursor: pointer;
+  transition: background 0.22s ease, color 0.22s ease, border-color 0.22s ease,
+    transform 0.18s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    box-shadow 0.22s ease;
+  will-change: transform;
+}
+
+.gate-btn-primary {
+  background: #251f33;
+  color: #f9f8f5;
+  border: 1px solid #251f33;
+}
+
+.gate-btn-primary:hover {
+  background: #3a3352;
+  border-color: #3a3352;
+  box-shadow: 0 4px 18px rgba(37, 31, 51, 0.22);
+}
+
+.gate-btn-outline {
+  background: transparent;
+  color: #251f33;
+  border: 1px solid rgba(37, 31, 51, 0.25);
+}
+
+.gate-btn-outline:hover {
+  background: rgba(37, 31, 51, 0.06);
+  border-color: rgba(37, 31, 51, 0.4);
+}
+
+/* ── Hero ── */
+.gate-hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: flex-end;
+  padding: 0 6vw 6rem;
+  overflow: hidden;
+  background: #f9f8f5;
+}
+
+.gate-hero-title {
+  font-family: "Bebas Neue", sans-serif;
+  font-size: clamp(14vw, 18vw, 22vw);
+  line-height: 0.88;
+  letter-spacing: -0.01em;
+  color: #e8e4dd;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 1;
+  text-align: center;
+  width: 100%;
+}
+
+/* Floating images */
+.gate-hero-img {
+  position: absolute;
+  z-index: 2;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 32px 80px rgba(37, 31, 51, 0.14);
+}
+
+.gate-hero-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.gate-hero-img-1 {
+  width: clamp(220px, 22vw, 340px);
+  aspect-ratio: 3 / 4;
+  top: 14%;
+  right: 18%;
+}
+
+.gate-hero-img-2 {
+  width: clamp(170px, 16vw, 260px);
+  aspect-ratio: 3 / 4;
+  top: 28%;
+  right: 8%;
+}
+
+/* Hero copy */
+.gate-hero-copy {
+  position: relative;
+  z-index: 3;
+  max-width: 560px;
+}
+
+.gate-hero-slogan {
+  font-family: "Bebas Neue", sans-serif;
+  font-size: clamp(3rem, 5.5vw, 5.5rem);
+  line-height: 0.95;
+  letter-spacing: -0.01em;
+  color: #251f33;
+  margin: 0 0 1.4rem;
+  font-weight: 400;
+}
+
+.gate-slogan-accent {
+  color: #4caf82;
+}
+
+.gate-hero-sub {
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 1rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #8a7f96;
+  margin: 0 0 0.6rem;
+}
+
+.gate-hero-desc {
+  font-size: 1.05rem;
+  line-height: 1.65;
+  color: #4a4255;
+  margin: 0 0 2rem;
+}
+
+.gate-hero-btns {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* Scroll hint */
+.gate-scroll-hint {
+  position: absolute;
+  bottom: 2.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #b8b0c4;
+}
+
+.gate-scroll-line {
+  width: 1px;
+  height: 40px;
+  background: linear-gradient(to bottom, #b8b0c4, transparent);
+}
+
+/* ── Marquee ── */
+.gate-marquee-wrap {
+  overflow: hidden;
+  background: #251f33;
+  padding: 1.1rem 0;
+  position: relative;
+  z-index: 4;
+}
+
+.gate-marquee {
+  display: flex;
+  gap: 0;
+  width: max-content;
+  animation: gate-scroll-marquee 22s linear infinite;
+}
+
+.gate-marquee-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 1.2rem;
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 1.1rem;
+  letter-spacing: 0.14em;
+  color: rgba(249, 248, 245, 0.7);
+  padding: 0 1.4rem;
+  white-space: nowrap;
+}
+
+.gate-marquee-dot {
+  font-size: 0.55rem;
+  color: rgba(249, 248, 245, 0.35);
+}
+
+@keyframes gate-scroll-marquee {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* ── Section shared ── */
+.gate-section-eyebrow {
+  font-size: 0.62rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #8a7f96;
+  margin: 0 0 0.5rem;
+}
+
+.gate-section-title {
+  font-family: "Bebas Neue", sans-serif;
+  font-size: clamp(2.8rem, 5vw, 5rem);
+  font-weight: 400;
+  line-height: 1;
+  color: #251f33;
+  margin: 0 0 3rem;
+}
+
+.gate-section-title em {
+  font-style: normal;
+  color: #8a7f96;
+}
+
+/* ── Stats ── */
+.gate-stats {
+  padding: 7rem 8vw;
+  background: #f4f1ec;
+}
+
+.gate-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.gate-stat-card {
+  background: #fff;
+  border: 1px solid rgba(37, 31, 51, 0.08);
+  border-radius: 20px;
+  padding: 2.5rem 2rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.gate-stat-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 40px rgba(37, 31, 51, 0.1);
+}
+
+.gate-stat-value {
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 4rem;
+  line-height: 1;
+  color: #251f33;
+  letter-spacing: -0.02em;
+}
+
+.gate-stat-label {
+  margin-top: 0.6rem;
+  font-size: 0.82rem;
+  color: #8a7f96;
+  letter-spacing: 0.04em;
+}
+
+/* ── How it works ── */
+.gate-how {
+  padding: 7rem 8vw;
+  background: #f9f8f5;
+}
+
+.gate-how-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 2rem;
+}
+
+.gate-step {
+  padding: 2rem;
+  border: 1px solid rgba(37, 31, 51, 0.08);
+  border-radius: 20px;
+  background: #fff;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.gate-step:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 40px rgba(37, 31, 51, 0.1);
+}
+
+.gate-step-num {
+  display: block;
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 3rem;
+  line-height: 1;
+  color: #e8e4dd;
+  margin-bottom: 1rem;
+}
+
+.gate-step-head {
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 1.4rem;
+  letter-spacing: 0.04em;
+  color: #251f33;
+  margin: 0 0 0.75rem;
+}
+
+.gate-step-body {
+  font-size: 0.85rem;
+  color: #6b6278;
+  line-height: 1.65;
+  margin: 0;
+}
+
+/* ── CTA band ── */
+.gate-cta-band {
+  padding: 8rem 8vw;
+  background: #251f33;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2.5rem;
+}
+
+.gate-cta-title {
+  font-family: "Bebas Neue", sans-serif;
+  font-size: clamp(3rem, 6vw, 6rem);
+  font-weight: 400;
+  line-height: 1;
+  color: #f9f8f5;
+  margin: 0;
+}
+
+.gate-cta-band .gate-btn-primary {
+  background: #f9f8f5;
+  color: #251f33;
+  border-color: #f9f8f5;
+  font-size: 0.88rem;
+  padding: 0.85rem 2.2rem;
+}
+
+.gate-cta-band .gate-btn-primary:hover {
+  background: #fff;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+}
+
+/* ── Footer ── */
+.gate-footer {
+  background: #251f33;
+  border-top: 1px solid rgba(249, 248, 245, 0.08);
+  padding: 2rem 8vw;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.gate-footer-brand {
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 1.2rem;
+  letter-spacing: 0.14em;
+  color: rgba(249, 248, 245, 0.5);
+}
+
+.gate-footer-copy {
+  font-size: 0.72rem;
+  color: rgba(249, 248, 245, 0.3);
+  letter-spacing: 0.04em;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .gate-hero {
+    padding: 0 5vw 5rem;
+    min-height: 100svh;
+  }
+
+  .gate-hero-img-1 {
+    width: 44vw;
+    right: 4vw;
+    top: 12%;
+  }
+
+  .gate-hero-img-2 {
+    display: none;
+  }
+
+  .gate-hero-title {
+    font-size: 28vw;
+  }
+
+  .gate-stats,
+  .gate-how {
+    padding: 5rem 6vw;
+  }
+}

@@ -1,11 +1,9 @@
 import { useState, useEffect } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
-import StyleSearchModal from "./StyleSearchModal";
-import type { Listing } from "../types/listing";
 import { useCart } from "../context/CartContext";
 import { useSaves } from "../context/SavesContext";
 
-const NAV_LINKS = ["Home", "How It Works", "Wardrobe", "Shop"];
+const NAV_LINKS = ["Explore", "Shop", "Wardrobe", "How It Works"];
 
 /* ── SVG Icons ──────────────────────────────────────── */
 const IconUpload = () => (
@@ -37,16 +35,11 @@ const IconUser = () => (
   </svg>
 );
 
-export default function Navbar({
-  onRecommendations,
-}: {
-  onRecommendations?: (listings: Listing[]) => void;
-}) {
+export default function Navbar() {
   const { isAuthenticated, logout, user } = useAuth0();
   const { cartCount } = useCart();
   const { savedCount } = useSaves();
   const [scrolled, setScrolled] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
 
   useEffect(() => {
@@ -55,16 +48,11 @@ export default function Navbar({
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const handleRecommendations = (listings: Listing[]) => {
-    onRecommendations?.(listings);
-    setModalOpen(false);
-  };
-
   return (
     <>
       <nav className={`navbar${scrolled ? " scrolled" : ""}`}>
         <a href="/" className="brand">
-          MAISON ORE
+          PFIFFLE
         </a>
 
         <div className="nav-links">
@@ -72,7 +60,7 @@ export default function Navbar({
             <a
               key={link}
               href={
-                link === "Home"
+                link === "Explore"
                   ? "/"
                   : link === "Shop"
                     ? "/shop"
@@ -90,14 +78,6 @@ export default function Navbar({
 
         {/* Right-side icon bar */}
         <div className="nav-icon-bar">
-          {/* Style Search */}
-          <button
-            type="button"
-            className="nav-style-btn"
-            onClick={() => setModalOpen(true)}>
-            &#9733; Style Search
-          </button>
-
           {/* Upload */}
           {isAuthenticated && (
             <a href="/shop/new-listing" className="nav-icon-btn" title="Upload listing">
@@ -183,12 +163,6 @@ export default function Navbar({
         </div>
       </nav>
 
-      <StyleSearchModal
-        isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        auth0Id={user?.sub ?? ""}
-        onRecommendations={handleRecommendations}
-      />
     </>
   );
 }

@@ -6,12 +6,14 @@ import purchaseRoutes from "./routes/purchaseRoutes";
 import uploadRoutes from "./routes/uploadRoutes";
 import userRoutes from "./routes/userRoutes";
 import outfitRoutes from "./routes/outfitRoutes";
+import locationRoutes from "./routes/locationRoutes";
 
 const app = express();
 
 const allowedOrigins = [
   "https://threadify.pages.dev",
   "https://hackcanada-2026-production.up.railway.app",
+  "https://hackcanada-2026.onrender.com",
   "http://localhost:5173",
   "http://localhost:5174",
   "http://127.0.0.1:5173",
@@ -23,6 +25,7 @@ const envOrigins = (process.env.CORS_ORIGINS || "")
   .filter(Boolean);
 
 const allowedOriginSet = new Set([...allowedOrigins, ...envOrigins]);
+// Allow any origin (echo back request Origin) — use if you still see CORS blocked despite correct origins
 const allowAllOrigins =
   process.env.CORS_ALLOW_ALL === "true" || allowedOriginSet.has("*");
 
@@ -33,14 +36,17 @@ app.use(
         callback(null, true);
         return;
       }
+      // Normalize: trim and strip trailing slash so "https://threadify.pages.dev/" matches
+      const o = origin.trim().replace(/\/+$/, "");
 
       if (allowAllOrigins) {
         callback(null, true);
         return;
       }
 
-      const isPagesPreview = /^https:\/\/[a-z0-9-]+\.pages\.dev$/i.test(origin);
-      if (allowedOriginSet.has(origin) || isPagesPreview) {
+      const isPagesPreview = /^https:\/\/[a-z0-9-]+\.pages\.dev$/i.test(o);
+      const isRender = /^https:\/\/[a-z0-9-]+\.onrender\.com$/i.test(o);
+      if (allowedOriginSet.has(o) || allowedOriginSet.has(origin) || isPagesPreview || isRender) {
         callback(null, true);
         return;
       }
@@ -58,6 +64,7 @@ app.use("/api/purchases", purchaseRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/outfit", outfitRoutes);
+app.use("/api/location", locationRoutes);
 
 app.get("/", (_req, res) => {
   res.status(200).send("ok");

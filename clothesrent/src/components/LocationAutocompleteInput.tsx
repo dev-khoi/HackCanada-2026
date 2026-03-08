@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import "./locationAutocompleteInput.css";
 import { formatSimpleAddress, type NominatimAddress } from "../utils/location";
+import { fetchLocationSuggestions } from "../api/location";
 
 type Suggestion = {
   id: string;
@@ -22,6 +23,75 @@ function toSimplifiedAddress(entry: {
 }): string {
   const main = formatSimpleAddress(entry.address);
   return main || entry.display_name;
+}
+
+async function fetchNominatimSuggestions(
+  query: string,
+  signal: AbortSignal,
+): Promise<Suggestion[]> {
+  const response = await fetch(
+    `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=5&q=${encodeURIComponent(query)}`,
+    { signal },
+  );
+  if (!response.ok) return [];
+
+  const data = (await response.json()) as Array<{
+    place_id: number;
+    display_name: string;
+    address?: NominatimAddress;
+  }>;
+  const nextSuggestions = data.map((entry) => ({
+    id: `nominatim-${entry.place_id}`,
+    label: toSimplifiedAddress(entry),
+  }));
+  return nextSuggestions.filter(
+    (item, index, all) =>
+      all.findIndex((other) => other.label === item.label) === index,
+  );
+}
+
+async function fetchPhotonSuggestions(
+  query: string,
+  signal: AbortSignal,
+): Promise<Suggestion[]> {
+  const response = await fetch(
+    `https://photon.komoot.io/api/?limit=5&q=${encodeURIComponent(query)}`,
+    { signal },
+  );
+  if (!response.ok) return [];
+
+  const data = (await response.json()) as {
+    features?: Array<{
+      properties?: {
+        name?: string;
+        street?: string;
+        housenumber?: string;
+        postcode?: string;
+        city?: string;
+        country?: string;
+      };
+    }>;
+  };
+
+  const features = data.features ?? [];
+  const suggestions = features
+    .map((feature, index) => {
+      const p = feature.properties ?? {};
+      const street = [p.street || p.name, p.housenumber].filter(Boolean).join(" ").trim();
+      const label = [street, p.postcode, p.city, p.country]
+        .filter((part) => Boolean(part && part.trim()))
+        .join(", ");
+      return {
+        id: `photon-${index}-${label}`,
+        label,
+      };
+    })
+    .filter((entry) => entry.label.length > 0);
+
+  return suggestions.filter(
+    (item, index, all) =>
+      all.findIndex((other) => other.label === item.label) === index,
+  );
 }
 
 export default function LocationAutocompleteInput({
@@ -50,29 +120,20 @@ export default function LocationAutocompleteInput({
     const timeout = window.setTimeout(async () => {
       setIsLoading(true);
       try {
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=5&q=${encodeURIComponent(query)}`,
-          { signal: controller.signal },
-        );
-        if (!response.ok) {
-          setSuggestions([]);
+        const fromBackend = await fetchLocationSuggestions(query);
+        if (fromBackend.length > 0) {
+          setSuggestions(fromBackend);
           return;
         }
 
-        const data = (await response.json()) as Array<{
-          place_id: number;
-          display_name: string;
-          address?: NominatimAddress;
-        }>;
-        const nextSuggestions = data.map((entry) => ({
-          id: String(entry.place_id),
-          label: toSimplifiedAddress(entry),
-        }));
-        const deduped = nextSuggestions.filter(
-          (item, index, all) =>
-            all.findIndex((other) => other.label === item.label) === index,
-        );
-        setSuggestions(deduped);
+        const fromNominatim = await fetchNominatimSuggestions(query, controller.signal);
+        if (fromNominatim.length > 0) {
+          setSuggestions(fromNominatim);
+          return;
+        }
+
+        const fromPhoton = await fetchPhotonSuggestions(query, controller.signal);
+        setSuggestions(fromPhoton);
       } catch {
         setSuggestions([]);
       } finally {

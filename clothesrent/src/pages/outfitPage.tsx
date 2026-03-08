@@ -1,7 +1,27 @@
 import { useState, useEffect, useRef, useCallback, type FormEvent } from "react";
 import { generateOutfit, type OutfitItem } from "../api/listings";
 import { buildDisplayUrl } from "../utils/cloudinaryUrl";
+import { navigate } from "../utils/navigate";
 import gsap from "gsap";
+
+/* ─── Clothing conveyor belt ─── */
+const CONVEYOR_WORDS = [
+  "TOP", "DRESS", "BAG", "SHOE", "COAT", "HAT",
+  "SCARF", "BELT", "SKIRT", "BOOT", "GLOVE", "RING",
+];
+
+function ClothingConveyor() {
+  const words = [...CONVEYOR_WORDS, ...CONVEYOR_WORDS];
+  return (
+    <div className="outfit-conveyor-wrap" aria-hidden="true">
+      <div className="outfit-conveyor">
+        {words.map((w, i) => (
+          <span key={i} className="outfit-conveyor-item">{w}</span>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 const SLOT_LABELS: Record<string, string> = {
   top: "Top",
@@ -193,7 +213,7 @@ export default function OutfitPage() {
     if (!d.hasMoved) {
       const item = outfitItems[d.idx];
       if (item) {
-        window.location.href = `/shop?highlight=${item.listingId}`;
+        navigate(`/listing/${item.listingId}`);
       }
     }
 
@@ -232,6 +252,8 @@ export default function OutfitPage() {
 
         {error && <p className="outfit-error">{error}</p>}
       </section>
+
+      {!hasGenerated && !loading && <ClothingConveyor />}
 
       {loading && (
         <section className="outfit-loading">
@@ -345,8 +367,9 @@ export default function OutfitPage() {
               return (
                 <a
                   key={item.listingId}
-                  href={`/shop?highlight=${item.listingId}`}
+                  href={`/listing/${item.listingId}`}
                   className="outfit-checkout-item"
+                  onClick={(e) => { e.preventDefault(); navigate(`/listing/${item.listingId}`); }}
                 >
                   <div className="outfit-checkout-img-wrap">
                     {imgUrl ? (

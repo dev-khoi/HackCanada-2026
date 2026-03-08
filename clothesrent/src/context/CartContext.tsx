@@ -19,27 +19,34 @@ interface CartContextValue {
 
 const CartContext = createContext<CartContextValue | null>(null);
 
-const STORAGE_KEY = "maison-ore-cart";
+function getStorageKey(userId: string) {
+    return userId ? `maison-ore-cart-${userId}` : "maison-ore-cart";
+}
 
-function loadCart(): CartItem[] {
+function loadCart(userId: string): CartItem[] {
     try {
-        const raw = localStorage.getItem(STORAGE_KEY);
+        const raw = localStorage.getItem(getStorageKey(userId));
         return raw ? JSON.parse(raw) : [];
     } catch {
         return [];
     }
 }
 
-function saveCart(items: CartItem[]) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+function saveCart(userId: string, items: CartItem[]) {
+    localStorage.setItem(getStorageKey(userId), JSON.stringify(items));
 }
 
-export function CartProvider({ children }: { children: ReactNode }) {
-    const [items, setItems] = useState<CartItem[]>(loadCart);
+export function CartProvider({ userId = "", children }: { userId?: string; children: ReactNode }) {
+    const [items, setItems] = useState<CartItem[]>(() => loadCart(userId));
+
+    // Re-load when user changes (login/logout/switch)
+    useEffect(() => {
+        setItems(loadCart(userId));
+    }, [userId]);
 
     useEffect(() => {
-        saveCart(items);
-    }, [items]);
+        saveCart(userId, items);
+    }, [items, userId]);
 
     const addToCart = useCallback((listing: Listing, mode: "rent" | "buy", days = 1) => {
         setItems((prev) => {

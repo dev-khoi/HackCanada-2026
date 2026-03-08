@@ -1,7 +1,8 @@
 # ClothesRent Backend
 
-## Recent Updates (March 7, 2026)
+## Recent Updates (March 7–8, 2026)
 
+- **Railway / CORS**: Added `backend/Dockerfile` so the app runs as `node dist/server.js` instead of `npm start`, fixing SIGTERM and container stops. Server listens on `0.0.0.0`. CORS already allows threadify.pages.dev; 502 was from the backend stopping—see Deployment section below.
 - Added root health compatibility routes: `GET /` and `GET /health` now return 200 for platform healthchecks.
 - CORS now supports `https://threadify.pages.dev`, Cloudflare preview domains (`*.pages.dev`), and comma-separated `CORS_ORIGINS` from environment variables.
 - CORS supports wildcard `*` in `CORS_ORIGINS` and `CORS_ALLOW_ALL=true` for temporary fail-open debugging.
@@ -185,14 +186,36 @@ The backend includes a **Dockerfile** so the process runs as `node dist/server.j
    - Optional: `CORS_ORIGINS` (comma-separated), `CORS_ALLOW_ALL=true` for debugging
 4. **Health check**: In Railway service settings, set the **Health Check Path** to `/health` (or `/`). The app listens on `0.0.0.0` and exposes `GET /`, `GET /health`, and `GET /api/health` returning 200.
 
-If you see "Stopping Container" and "npm error signal SIGTERM" in logs, use a **Custom Start Command** in Railway: `node dist/server.js` (so Node receives SIGTERM). The server now **listens immediately** before MongoDB connects so Railway's health check gets 200 and doesn't kill the container.
+If you see "Stopping Container" and "npm error signal SIGTERM" in logs, use a **Custom Start Command** in Railway: `node dist/server.js` (so Node receives SIGTERM). The server now **listens immediately** before MongoDB connects so Railway's health check gets 200 and doesn't kill the container. If the container stops after ~15s and you see "Received SIGTERM", Railway may be replacing it with a new deployment — check the Deployments tab for a newer Active deployment and test your backend /health URL in a browser; if it returns 200, the current deployment is up. Use backend/railway.toml to set healthcheckPath and healthcheckTimeout if needed.
+
+### Render
+
+Use these settings when creating a **Web Service** for the backend (monorepo: backend lives in `backend/`).
+
+| Setting | Value |
+|--------|--------|
+| **Root Directory** | `backend` |
+| **Environment** | Node |
+| **Build Command** | `npm install && npm run build` |
+| **Start Command** | `node dist/server.js` |
+| **Health Check Path** | `/health` |
+
+**Environment variables** (Dashboard → Environment):
+
+- `MONGO_URI` — **required** (MongoDB connection string)
+- `PORT` — set by Render (default 10000); app uses it automatically
+- `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` — for uploads
+- `GEMINI_API_KEY` — optional, for style analysis
+- `CORS_ORIGINS` — optional; e.g. `https://threadify.pages.dev` (app already allows `threadify.pages.dev` and `*.pages.dev`)
+
+The app binds to `0.0.0.0` and uses `process.env.PORT`, so no extra config is needed. Optional: use a **Blueprint** — add `render.yaml` at the repo root (see project root) and in Render choose **New → Blueprint**, then connect the repo; Render will create the service with the above settings and prompt for `MONGO_URI`.
 
 ### Cloudflare Pages (frontend)
 
 Set the build-time variable so the frontend talks to your backend:
 
 - **Variable name**: `VITE_API_URL`
-- **Value**: Your backend base URL, e.g. `https://hackcanada-2026-production.up.railway.app`
+- **Value**: Your backend base URL, e.g. `https://your-app.onrender.com` or your Railway URL
 
 No trailing slash. Rebuild the frontend after changing this.
 
@@ -331,7 +354,7 @@ Send as **multipart/form-data**:
 
 ---
 
-### Listings — `/api/listings`
+### Location`r`n`r`n| Method | Endpoint | Query | Description |`r`n|--------|----------|-------|-------------|`r`n| GET | `/api/location/suggest` | `?q=toronto` | Address autocomplete suggestions (server-side geocoder proxy) |`r`n`r`n---`r`n`r`n### Listings — `/api/listings`
 
 | Method | Endpoint | Body / Query | Description |
 | --- | --- | --- | --- |
@@ -677,5 +700,6 @@ The frontend (`clothesrent/`) at `http://localhost:5173` connects to this backen
 **Style search**:
 
 - `POST /api/style/search` with `{ query: "..." }`
+
 
 
