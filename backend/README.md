@@ -1,7 +1,8 @@
 # ClothesRent Backend
 
-## Recent Updates (March 7, 2026)
+## Recent Updates (March 7–8, 2026)
 
+- **Railway / CORS**: Added `backend/Dockerfile` so the app runs as `node dist/server.js` instead of `npm start`, fixing SIGTERM and container stops. Server listens on `0.0.0.0`. CORS already allows threadify.pages.dev; 502 was from the backend stopping—see Deployment section below.
 - Added root health compatibility routes: `GET /` and `GET /health` now return 200 for platform healthchecks.
 - CORS now supports `https://threadify.pages.dev`, Cloudflare preview domains (`*.pages.dev`), and comma-separated `CORS_ORIGINS` from environment variables.
 - CORS supports wildcard `*` in `CORS_ORIGINS` and `CORS_ALLOW_ALL=true` for temporary fail-open debugging.
@@ -167,6 +168,34 @@ npm run dev
 npm run build    # TypeScript → dist/
 npm start        # node dist/server.js
 ```
+
+---
+
+## Deployment
+
+### Railway (recommended)
+
+The backend includes a **Dockerfile** so the process runs as `node dist/server.js` instead of `npm start`. This ensures the Node process receives SIGTERM correctly when Railway stops the container (npm does not forward signals).
+
+1. **Deploy from repo**: Connect the `backend/` directory (or monorepo root with root set to `backend`) to Railway.
+2. **Use Docker**: Railway will detect the Dockerfile and build/run the image. Ensure **Root Directory** is set to `backend` if the repo root is the repo root.
+3. **Environment variables**: Set in Railway dashboard:
+   - `MONGO_URI` (required)
+   - `PORT` (Railway sets this automatically; the app uses it)
+   - `CLOUDINARY_*`, `GEMINI_*`, etc. as needed
+   - Optional: `CORS_ORIGINS` (comma-separated), `CORS_ALLOW_ALL=true` for debugging
+4. **Health check**: In Railway service settings, set the **Health Check Path** to `/health` (or `/`). The app listens on `0.0.0.0` and exposes `GET /`, `GET /health`, and `GET /api/health` returning 200.
+
+If you see "Stopping Container" and "npm error signal SIGTERM" in logs, redeploy after adding the Dockerfile so the container runs Node directly.
+
+### Cloudflare Pages (frontend)
+
+Set the build-time variable so the frontend talks to your backend:
+
+- **Variable name**: `VITE_API_URL`
+- **Value**: Your backend base URL, e.g. `https://hackcanada-2026-production.up.railway.app`
+
+No trailing slash. Rebuild the frontend after changing this.
 
 ---
 
