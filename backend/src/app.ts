@@ -58,6 +58,14 @@ app.use("/api/upload", uploadRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/outfit", outfitRoutes);
 
+app.get("/", (_req, res) => {
+  res.status(200).send("ok");
+});
+
+app.get("/health", (_req, res) => {
+  res.status(200).json({ status: "ok" });
+});
+
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok" });
 });

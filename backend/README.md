@@ -2,6 +2,7 @@
 
 ## Recent Updates (March 7, 2026)
 
+- Added root health compatibility routes: `GET /` and `GET /health` now return 200 for platform healthchecks.
 - CORS now supports `https://threadify.pages.dev`, Cloudflare preview domains (`*.pages.dev`), and comma-separated `CORS_ORIGINS` from environment variables.
 - CORS supports wildcard `*` in `CORS_ORIGINS` and `CORS_ALLOW_ALL=true` for temporary fail-open debugging.
 - CORS now includes `https://threadify.pages.dev` in the backend allowed origins list.
