@@ -1495,21 +1495,13 @@ footer {
   animation: outfitHeroIn 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
 }
 
-/* "look" — Caveat sketch font + green */
-.outfit-look {
+.outfit-title em {
   font-family: "Caveat", cursive;
   font-style: normal;
   font-weight: 700;
   font-size: 1.18em;
   color: #4caf82;
   letter-spacing: 0.01em;
-  display: inline-block;
-  animation: outfitLookIn 1s cubic-bezier(0.22, 1, 0.36, 1) 0.25s both;
-}
-
-@keyframes outfitLookIn {
-  from { opacity: 0; transform: translateY(12px) rotate(-2deg); }
-  to   { opacity: 1; transform: translateY(0) rotate(0deg); }
 }
 
 .outfit-subtitle {

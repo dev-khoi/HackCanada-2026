@@ -230,7 +230,7 @@ export default function OutfitPage() {
       <section className="outfit-hero">
         <div className="section-eyebrow">AI Wardrobe</div>
         <h1 className="font-display outfit-title">
-          Describe your <em className="outfit-look">look</em>
+          Describe your <em>look</em>
         </h1>
         <p className="outfit-subtitle">
           Tell us the vibe and we'll build a rentable outfit from real listings near you.
@@ -253,7 +253,7 @@ export default function OutfitPage() {
         {error && <p className="outfit-error">{error}</p>}
       </section>
 
-      <ClothingConveyor />
+      {!hasGenerated && !loading && <ClothingConveyor />}
 
       {loading && (
         <section className="outfit-loading">
