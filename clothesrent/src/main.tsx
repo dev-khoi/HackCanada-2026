@@ -1,4 +1,4 @@
-import { StrictMode, useState } from "react";
+import { StrictMode, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { Auth0Provider, useAuth0 } from "@auth0/auth0-react";
 import "./index.css";
@@ -8,18 +8,24 @@ import Navbar from "./components/navBar.tsx";
 import type { Listing } from "./types/listing.ts";
 import { CartProvider } from "./context/CartContext.tsx";
 import { SavesProvider } from "./context/SavesContext.tsx";
+import { onNavigate } from "./utils/navigate.ts";
 
 function Root() {
   const [recommendations, setRecommendations] = useState<Listing[]>([]);
   const { isAuthenticated, isLoading, user } = useAuth0();
+  const [path, setPath] = useState(window.location.pathname);
 
-  // Hide the app navbar on the gate landing page (unauthenticated root)
-  const isGate = !isLoading && !isAuthenticated && window.location.pathname === "/";
+  useEffect(() => {
+    return onNavigate(() => setPath(window.location.pathname));
+  }, []);
+
+  // Hide the app navbar on the gate landing page (unauthenticated root) or onboarding
+  const hideNavbar = !isLoading && !isAuthenticated && path === "/";
 
   return (
     <CartProvider userId={user?.sub ?? ""}>
       <SavesProvider userId={user?.sub ?? ""}>
-        {!isGate && <Navbar />}
+        {!hideNavbar && <Navbar />}
         <App recommendations={recommendations} onClearRecommendations={() => setRecommendations([])} onRecommendations={setRecommendations} />
       </SavesProvider>
     </CartProvider>

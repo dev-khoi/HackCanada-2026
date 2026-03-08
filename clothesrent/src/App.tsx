@@ -103,6 +103,7 @@ function ProductShowcase({
 }) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
+  const isPaused = useRef(false);
 
   const hasRecommendations = recommendations.length > 0;
   const displayListings = hasRecommendations ? recommendations : dbListings;
@@ -119,7 +120,7 @@ function ProductShowcase({
     const speed = 0.45;
 
     const tick = () => {
-      if (!isHovered) {
+      if (!isHovered && !isPaused.current) {
         viewport.scrollLeft += speed;
         const halfWidth = viewport.scrollWidth / 2;
         if (viewport.scrollLeft >= halfWidth) {
@@ -138,8 +139,41 @@ function ProductShowcase({
     const viewport = viewportRef.current;
     if (!viewport) return;
 
+    // Pause auto-scroll so it doesn't fight the manual scroll
+    isPaused.current = true;
+
     const cardStep = 324;
-    viewport.scrollBy({ left: direction * cardStep, behavior: "smooth" });
+    const target = viewport.scrollLeft + direction * cardStep;
+    const halfWidth = viewport.scrollWidth / 2;
+
+    // Animate manually over 400ms
+    const start = viewport.scrollLeft;
+    const startTime = performance.now();
+    const duration = 400;
+
+    const animate = (now: number) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      // Ease out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      viewport.scrollLeft = start + (target - start) * eased;
+
+      // Wrap around for infinite loop
+      if (viewport.scrollLeft >= halfWidth) {
+        viewport.scrollLeft -= halfWidth;
+      } else if (viewport.scrollLeft < 0) {
+        viewport.scrollLeft += halfWidth;
+      }
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        // Resume auto-scroll after animation
+        isPaused.current = false;
+      }
+    };
+
+    requestAnimationFrame(animate);
   };
 
   return (
