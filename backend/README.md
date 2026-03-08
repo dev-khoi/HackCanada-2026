@@ -186,7 +186,7 @@ The backend includes a **Dockerfile** so the process runs as `node dist/server.j
    - Optional: `CORS_ORIGINS` (comma-separated), `CORS_ALLOW_ALL=true` for debugging
 4. **Health check**: In Railway service settings, set the **Health Check Path** to `/health` (or `/`). The app listens on `0.0.0.0` and exposes `GET /`, `GET /health`, and `GET /api/health` returning 200.
 
-If you see "Stopping Container" and "npm error signal SIGTERM" in logs, redeploy after adding the Dockerfile so the container runs Node directly.
+If you see "Stopping Container" and "npm error signal SIGTERM" in logs, use a **Custom Start Command** in Railway: `node dist/server.js` (so Node receives SIGTERM). The server now **listens immediately** before MongoDB connects so Railway's health check gets 200 and doesn't kill the container.
 
 ### Cloudflare Pages (frontend)
 
