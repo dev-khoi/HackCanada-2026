@@ -134,7 +134,21 @@
 .gate-hero-copy {
   position: relative;
   z-index: 3;
-  max-width: 480px;
+  max-width: 560px;
+}
+
+.gate-hero-slogan {
+  font-family: "Bebas Neue", sans-serif;
+  font-size: clamp(3rem, 5.5vw, 5.5rem);
+  line-height: 0.95;
+  letter-spacing: -0.01em;
+  color: #251f33;
+  margin: 0 0 1.4rem;
+  font-weight: 400;
+}
+
+.gate-slogan-accent {
+  color: #4caf82;
 }
 
 .gate-hero-sub {

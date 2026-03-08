@@ -52,7 +52,7 @@ export default function Navbar() {
     <>
       <nav className={`navbar${scrolled ? " scrolled" : ""}`}>
         <a href="/" className="brand">
-          MAISON ORE
+          PFIFFLE
         </a>
 
         <div className="nav-links">
