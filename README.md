@@ -34,7 +34,7 @@ The project is split into two independently deployable services.
 | Geocoding | Photon (komoot) via server proxy |
 | Map | React Leaflet |
 | Frontend hosting | Cloudflare Pages |
-| Backend hosting | Railway |
+| Backend hosting | Render |
 
 ---
 
